@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "li9lWUupZNiRYH5SMu5pj7+b03gPAudAPrYLY2o70ow=",
+  "Source": "HotelManagement.API",
+  "BasePath": "_content/HotelManagement.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "HotelManagement.API\\wwwroot",
+      "Source": "HotelManagement.API",
+      "ContentRoot": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.API\\wwwroot\\",
+      "BasePath": "_content/HotelManagement.API",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
