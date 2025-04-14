@@ -62,87 +62,74 @@ Dự án được tổ chức theo kiến trúc Clean Architecture với các la
 - **HotelManagement.Infrastructure**: Chứa các implementation của interface và kết nối cơ sở dữ liệu
 - **HotelManagement.API**: Chứa các controller và endpoint API
 
-## API Endpoints
+API Endpoints
+Authentication
+POST /api/auth/login: Đăng nhập và lấy JWT token
+POST /api/auth/register: Đăng ký người dùng mới
+GET /api/auth/me: Lấy thông tin người dùng hiện tại
+POST /api/auth/logout: Đăng xuất người dùng
+POST /api/auth/forgot-password: Gửi email đặt lại mật khẩu
+POST /api/auth/reset-password: Đặt lại mật khẩu
+PUT /api/auth/change-password: Thay đổi mật khẩu
+Users
+GET /api/users: Lấy danh sách người dùng
+GET /api/users/{id}: Lấy thông tin người dùng theo ID
+POST /api/users: Tạo người dùng mới
+PUT /api/users/{id}: Cập nhật thông tin người dùng
+DELETE /api/users/{id}: Xóa người dùng
+PUT /api/users/profile: Cập nhật thông tin cá nhân
+Rooms
+GET /api/rooms: Lấy danh sách phòng
+GET /api/rooms/{id}: Lấy thông tin phòng theo ID
+GET /api/rooms/available: Lấy danh sách phòng có sẵn trong khoảng thời gian
+POST /api/rooms: Tạo phòng mới
+PUT /api/rooms/{id}: Cập nhật thông tin phòng
+DELETE /api/rooms/{id}: Xóa phòng
+POST /api/rooms/image: Tải lên hình ảnh phòng
+DELETE /api/rooms/{roomId}/image/{imageId}: Xóa hình ảnh phòng
+GET /api/rooms/amenities: Lấy danh sách tiện nghi phòng
+Room Types
+GET /api/roomtypes: Lấy danh sách loại phòng
+GET /api/roomtypes/{id}: Lấy thông tin loại phòng theo ID
+POST /api/roomtypes: Tạo loại phòng mới
+PUT /api/roomtypes/{id}: Cập nhật thông tin loại phòng
+DELETE /api/roomtypes/{id}: Xóa loại phòng
+Bookings
+GET /api/bookings: Lấy danh sách đặt phòng
+GET /api/bookings/{id}: Lấy thông tin đặt phòng theo ID
+GET /api/bookings/my-bookings: Lấy danh sách đặt phòng của người dùng hiện tại
+GET /api/bookings/filter: Lọc và tìm kiếm đặt phòng
+POST /api/bookings: Tạo đặt phòng mới
+PUT /api/bookings/{id}: Cập nhật thông tin đặt phòng
+DELETE /api/bookings/{id}: Xóa đặt phòng
+PUT /api/bookings/{id}/status: Cập nhật trạng thái đặt phòng
+PUT /api/bookings/{id}/check-in: Check-in cho đặt phòng
+PUT /api/bookings/{id}/check-out: Check-out cho đặt phòng
+PUT /api/bookings/{id}/cancel: Hủy đặt phòng
+PUT /api/bookings/{id}/payment: Cập nhật thanh toán
+POST /api/bookings/{id}/payment/process: Xử lý thanh toán
+GET /api/bookings/{id}/services: Lấy danh sách dịch vụ của đặt phòng
+POST /api/bookings/{id}/services: Thêm dịch vụ cho đặt phòng
+DELETE /api/bookings/{id}/services/{serviceId}: Xóa dịch vụ của đặt phòng
+GET /api/bookings/{id}/invoice: Lấy hóa đơn của đặt phòng
+POST /api/bookings/{id}/invoice: Tạo hóa đơn cho đặt phòng
+Services
+GET /api/services: Lấy danh sách dịch vụ
+GET /api/services/{id}: Lấy thông tin dịch vụ theo ID
+GET /api/services/category/{categoryId}: Lấy dịch vụ theo danh mục
+GET /api/services/search: Tìm kiếm dịch vụ
+GET /api/services/categories: Lấy danh sách danh mục dịch vụ
+POST /api/services: Tạo dịch vụ mới
+PUT /api/services/{id}: Cập nhật dịch vụ
+DELETE /api/services/{id}: Xóa dịch vụ
+POST /api/services/categories: Tạo danh mục dịch vụ mới
+POST /api/services/image: Tải lên hình ảnh dịch vụ
+Reports
+GET /api/reports/monthly-revenue: Lấy báo cáo doanh thu theo tháng
+GET /api/reports/occupancy: Lấy báo cáo công suất phòng
 
-### Authentication
 
-Muốn test api thì phải đăng nhập, hoặc không có tài khoản admin thì tạo , và phân quyền role là admin.. đăng nhập và nhập JWT token vào Authorize dưới dạng sau : Bearer(khoảng cách) MãJWT
-
-- POST `/api/auth/login`: Đăng nhập và lấy JWT token
-- POST `/api/auth/register`: Đăng ký người dùng mới
-- GET `/api/auth/me`: Lấy thông tin người dùng hiện tại
-- POST `/api/auth/logout`: Đăng xuất người dùng
-- POST `/api/auth/forgot-password`: Gửi email đặt lại mật khẩu
-- POST `/api/auth/reset-password`: Đặt lại mật khẩu
-- PUT `/api/auth/change-password`: Thay đổi mật khẩu
-
-### Users
-
-- GET `/api/users`: Lấy danh sách người dùng
-- GET `/api/users/{id}`: Lấy thông tin người dùng theo ID
-- POST `/api/users`: Tạo người dùng mới
-- PUT `/api/users/{id}`: Cập nhật thông tin người dùng
-- DELETE `/api/users/{id}`: Xóa người dùng
-- PUT `/api/users/profile`: Cập nhật thông tin cá nhân
-
-### Rooms
-
-- GET `/api/rooms`: Lấy danh sách phòng
-- GET `/api/rooms/{id}`: Lấy thông tin phòng theo ID
-- GET `/api/rooms/available`: Lấy danh sách phòng có sẵn trong khoảng thời gian
-- POST `/api/rooms`: Tạo phòng mới
-- PUT `/api/rooms/{id}`: Cập nhật thông tin phòng
-- DELETE `/api/rooms/{id}`: Xóa phòng
-- POST `/api/rooms/image`: Tải lên hình ảnh phòng
-- DELETE `/api/rooms/{roomId}/image/{imageId}`: Xóa hình ảnh phòng
-- GET `/api/rooms/amenities`: Lấy danh sách tiện nghi phòng
-
-### Room Types
-
-- GET `/api/roomtypes`: Lấy danh sách loại phòng
-- GET `/api/roomtypes/{id}`: Lấy thông tin loại phòng theo ID
-- POST `/api/roomtypes`: Tạo loại phòng mới
-- PUT `/api/roomtypes/{id}`: Cập nhật thông tin loại phòng
-- DELETE `/api/roomtypes/{id}`: Xóa loại phòng
-
-### Bookings
-
-- GET `/api/bookings`: Lấy danh sách đặt phòng
-- GET `/api/bookings/{id}`: Lấy thông tin đặt phòng theo ID
-- GET `/api/bookings/my-bookings`: Lấy danh sách đặt phòng của người dùng hiện tại
-- GET `/api/bookings/filter`: Lọc và tìm kiếm đặt phòng
-- POST `/api/bookings`: Tạo đặt phòng mới
-- PUT `/api/bookings/{id}`: Cập nhật thông tin đặt phòng
-- DELETE `/api/bookings/{id}`: Xóa đặt phòng
-- PUT `/api/bookings/{id}/status`: Cập nhật trạng thái đặt phòng
-- PUT `/api/bookings/{id}/check-in`: Check-in cho đặt phòng
-- PUT `/api/bookings/{id}/check-out`: Check-out cho đặt phòng
-- PUT `/api/bookings/{id}/cancel`: Hủy đặt phòng
-- PUT `/api/bookings/{id}/payment`: Cập nhật thanh toán
-- POST `/api/bookings/{id}/payment/process`: Xử lý thanh toán
-- GET `/api/bookings/{id}/services`: Lấy danh sách dịch vụ của đặt phòng
-- POST `/api/bookings/{id}/services`: Thêm dịch vụ cho đặt phòng
-- DELETE `/api/bookings/{id}/services/{serviceId}`: Xóa dịch vụ của đặt phòng
-- GET `/api/bookings/{id}/invoice`: Lấy hóa đơn của đặt phòng
-- POST `/api/bookings/{id}/invoice`: Tạo hóa đơn cho đặt phòng
-
-### Services
-
-- GET `/api/services`: Lấy danh sách dịch vụ
-- GET `/api/services/{id}`: Lấy thông tin dịch vụ theo ID
-- GET `/api/services/category/{categoryId}`: Lấy dịch vụ theo danh mục
-- GET `/api/services/search`: Tìm kiếm dịch vụ
-- GET `/api/services/categories`: Lấy danh sách danh mục dịch vụ
-- POST `/api/services`: Tạo dịch vụ mới
-- PUT `/api/services/{id}`: Cập nhật dịch vụ
-- DELETE `/api/services/{id}`: Xóa dịch vụ
-- POST `/api/services/categories`: Tạo danh mục dịch vụ mới
-- POST `/api/services/image`: Tải lên hình ảnh dịch vụ
-
-### Reports
-
-- GET `/api/reports/monthly-revenue`: Lấy báo cáo doanh thu theo tháng
-- GET `/api/reports/occupancy`: Lấy báo cáo công suất phòng
+Lưu ý: Một số chức năng như cập nhật trạng thái, hủy đặt phòng, và quản lý hóa đơn được tích hợp vào các API hiện có thay vì có API riêng biệt.
 
 ## Cấu trúc cơ sở dữ liệu
 
@@ -384,3 +371,126 @@ Services/
 ReportService.cs: Triển khai IReportService, tạo các báo cáo từ stored procedures.
 Báo cáo doanh thu theo tháng
 Báo cáo công suất phòng
+
+
+
+###Đây là chi tiết về cách thức hoạt động của backend ///// NÊN ĐỌC 
+
+1. Kiến trúc theo Clean Architecture
+Hệ thống được chia thành 4 tầng chính:
+
+HotelManagement.API (Presentation Layer): Giao diện tiếp nhận request từ phía client và trả về response.
+
+HotelManagement.Application (Application Layer): Chứa logic xử lý nghiệp vụ, định nghĩa các interface, DTO và đăng ký dependency injection.
+
+HotelManagement.Domain (Domain Layer): Chứa các entity cốt lõi của hệ thống (như Booking, Room, Service, User, …) thể hiện dữ liệu và quy tắc nghiệp vụ.
+
+HotelManagement.Infrastructure (Infrastructure Layer): Triển khai các interface từ tầng Application, bao gồm Repository, Service, Data Access và các dịch vụ xác thực.
+
+2. Chi tiết tương tác giữa các thành phần
+2.1. HotelManagement.API
+File cấu hình chính:
+
+appsettings.json: Định nghĩa kết nối cơ sở dữ liệu, JWT settings và cấu hình logging.
+
+Program.cs: Điểm khởi đầu của ứng dụng, nơi cấu hình các service cần thiết, middleware (như ExceptionHandlingMiddleware và JwtBlacklistMiddleware), Swagger và khởi tạo kết nối database.
+
+Controllers:
+Mỗi controller chịu trách nhiệm xử lý một nhóm chức năng cụ thể. Ví dụ:
+
+AuthController.cs: Xử lý login, đăng ký, quên mật khẩu.
+
+BookingsController.cs, RoomsController.cs, RoomTypesController.cs,…: Xử lý các thao tác CRUD và nghiệp vụ liên quan đến đặt phòng, phòng, loại phòng, dịch vụ, người dùng, hình ảnh và báo cáo.
+
+Mapping:
+
+MappingProfile.cs: Định nghĩa cấu hình AutoMapper chuyển đổi giữa entity và DTO, giúp giảm thiểu việc lặp lại code khi chuyển đổi dữ liệu giữa các tầng.
+
+Middleware:
+
+ExceptionHandlingMiddleware.cs: Bắt và xử lý ngoại lệ toàn cục, đảm bảo trả về thông tin lỗi thống nhất.
+
+JwtBlacklistMiddleware.cs: Kiểm tra các token đã bị thu hồi (blacklist) trước khi xử lý request.
+
+2.2. HotelManagement.Application
+DependencyInjection.cs:
+Cấu hình đăng ký các service, bao gồm các repository và AutoMapper, cho container của DI, giúp liên kết các tầng với nhau.
+
+Common/Exceptions:
+Chứa các lớp ngoại lệ tùy chỉnh như ForbiddenAccessException, NotFoundException, ValidationException, được sử dụng để báo lỗi trong các thao tác nghiệp vụ.
+
+Interfaces và Models:
+
+Các interface định nghĩa khả năng của các module như IBookingRepository, IIdentityService, ITokenService,…
+
+Các DTO (Data Transfer Objects) được định nghĩa trong Models nhằm truyền tải dữ liệu giữa các tầng một cách rõ ràng (ví dụ: AuthenticationResult, MonthlyRevenueReportDto,…).
+
+2.3. HotelManagement.Domain
+Entities:
+Đây là tầng cốt lõi chứa các lớp entity thể hiện dữ liệu chính của hệ thống, ví dụ:
+
+Booking, BookingHistory, BookingService: Quản lý các thông tin và lịch sử đặt phòng.
+
+Customer, CustomerAddress: Thông tin khách hàng và địa chỉ.
+
+Room, RoomType, RoomFeature: Quản lý thông tin phòng, loại phòng và các tính năng liên quan.
+
+Service, ServiceCategory: Quản lý dịch vụ và phân loại.
+
+Invoice, InvoiceItem: Thông tin hóa đơn thanh toán.
+
+User: Quản lý người dùng và liên kết với các entity khác như Customer, BookingHistory.
+
+2.4. HotelManagement.Infrastructure
+DependencyInjection.cs:
+Đăng ký các dịch vụ repository và service cụ thể với DI container, khớp với các interface ở tầng Application.
+
+Data Access:
+
+HotelDbContext.cs: Định nghĩa DbContext của Entity Framework Core với các DbSet tương ứng với các entity trong hệ thống. Cấu hình mối quan hệ, khóa ngoại và các ràng buộc dữ liệu.
+
+Identity:
+
+IdentityService.cs: Triển khai IIdentityService, đảm nhận việc xác thực, đăng ký người dùng và quản lý mật khẩu (đặt lại, thay đổi).
+
+TokenService.cs: Triển khai ITokenService, xử lý tạo và quản lý JWT token.
+
+Repositories:
+Cung cấp các lớp triển khai cho các interface như IBookingRepository, IRoomRepository, IServiceRepository,… Thực hiện các thao tác truy cập dữ liệu:
+
+Tìm kiếm, tạo, cập nhật, xóa các entity liên quan đến đặt phòng, phòng, loại phòng, dịch vụ và người dùng.
+
+Services:
+
+ReportService.cs: Triển khai IReportService, xây dựng các báo cáo như doanh thu theo tháng và tỉ lệ lấp đầy phòng, có thể sử dụng stored procedures để thực hiện truy vấn trên cơ sở dữ liệu.
+
+3. Luồng hoạt động từ client đến database
+Client gửi request:
+Các request (đăng nhập, đặt phòng, cập nhật thông tin, …) được gửi đến API thông qua các endpoint được định nghĩa trong các controller.
+
+API nhận và xử lý request:
+
+Middleware (như ExceptionHandling và JwtBlacklist) chạy đầu tiên để kiểm tra và xử lý các lỗi toàn cục hoặc xác thực token.
+
+Controller nhận request, gọi các service ở tầng Application.
+
+Xử lý nghiệp vụ ở tầng Application:
+
+Controller chuyển request thành các DTO và gọi đến các interface (vd: IBookingRepository, IIdentityService,…).
+
+Các nghiệp vụ và quy tắc kiểm tra hợp lệ được thực hiện tại đây, sử dụng các lớp ngoại lệ tùy chỉnh nếu cần.
+
+Tương tác với cơ sở dữ liệu ở tầng Infrastructure:
+
+Các repository đã đăng ký sẽ được gọi để thực hiện các thao tác CRUD lên database thông qua HotelDbContext.
+
+Các service (như IdentityService, TokenService) đảm nhận các tác vụ liên quan đến xác thực và tạo token.
+
+Chuyển đổi dữ liệu:
+
+AutoMapper được sử dụng để chuyển đổi giữa entity và DTO, đảm bảo rằng dữ liệu trả về client được định dạng đúng.
+
+Trả về kết quả:
+
+Sau khi xử lý xong, controller nhận kết quả từ tầng Application, chuyển đổi lại thành response JSON và trả về client.
+
