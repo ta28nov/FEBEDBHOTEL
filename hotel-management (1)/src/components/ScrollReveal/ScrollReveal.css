@@ -1,0 +1,11 @@
+.scroll-reveal {
+  will-change: transform, opacity;
+}
+
+/* Tối ưu hóa hiệu suất */
+.scroll-reveal {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+

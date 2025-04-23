@@ -1,0 +1,200 @@
+/**
+ * AdminLayout.css
+ *
+ * Vai trò: Định dạng giao diện cho layout quản trị.
+ * Chức năng:
+ * - Định dạng sidebar
+ * - Định dạng main content
+ * - Định dạng responsive cho layout
+ * - Định dạng các menu và nút điều hướng
+ */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: #1a1a2e;
+  color: #fff;
+  transition: all 0.3s ease;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.sidebar.minimized {
+  width: 80px;
+  overflow-x: hidden;
+}
+
+.sidebar.minimized .sidebar-header h2,
+.sidebar.minimized .user-info,
+.sidebar.minimized .sidebar-nav span,
+.sidebar.minimized .sidebar-footer span {
+  display: none;
+}
+
+.sidebar.minimized .sidebar-header {
+  justify-content: center;
+}
+
+.sidebar.minimized .sidebar-user {
+  justify-content: center;
+}
+
+.sidebar.minimized .sidebar-user .user-avatar {
+  margin-right: 0;
+}
+
+.sidebar.minimized .sidebar-nav a {
+  justify-content: center;
+  padding: 15px 0;
+}
+
+.sidebar.minimized .sidebar-nav a svg {
+  margin-right: 0;
+}
+
+.sidebar.minimized .sidebar-footer {
+  text-align: center;
+}
+
+.sidebar.minimized .logout-button {
+  width: auto;
+  padding: 10px;
+}
+
+.sidebar.minimized .logout-button svg {
+  margin-right: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.sidebar-toggle {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #16213e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.user-info h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.user-info p {
+  margin: 5px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin: 0;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav a:hover {
+  background-color: #16213e;
+}
+
+.sidebar-nav a svg {
+  margin-right: 15px;
+  font-size: 1.2rem;
+}
+
+.logout-item {
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-item a {
+  color: #ff6b6b;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-minimized {
+  margin-left: 80px;
+}
+
+.content-wrapper {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  min-height: calc(100vh - 40px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+

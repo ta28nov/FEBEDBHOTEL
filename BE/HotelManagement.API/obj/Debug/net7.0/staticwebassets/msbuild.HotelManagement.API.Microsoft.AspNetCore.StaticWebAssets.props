@@ -1,0 +1,20 @@
+﻿<Project>
+  <ItemGroup>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\images\rooms\0aea7e0e-fd7c-48d4-b446-0d237f1c5a60_z6100548188884_956003cb29b3e93a40e67891f1e010b9.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>HotelManagement.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/HotelManagement.API</BasePath>
+      <RelativePath>images/rooms/0aea7e0e-fd7c-48d4-b446-0d237f1c5a60_z6100548188884_956003cb29b3e93a40e67891f1e010b9.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\images\rooms\0aea7e0e-fd7c-48d4-b446-0d237f1c5a60_z6100548188884_956003cb29b3e93a40e67891f1e010b9.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+  </ItemGroup>
+</Project>

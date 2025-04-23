@@ -3574,46 +3574,38 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\admin\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Admin\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.API\\HotelManagement.API.csproj",
+      "projectUniqueName": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.API\\HotelManagement.API.csproj",
       "projectName": "HotelManagement.API",
-      "projectPath": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.API\\HotelManagement.API.csproj",
-      "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.API\\obj\\",
+      "projectPath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.API\\HotelManagement.API.csproj",
+      "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.API\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net7.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
           "projectReferences": {
-            "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Application\\HotelManagement.Application.csproj": {
-              "projectPath": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Application\\HotelManagement.Application.csproj"
+            "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Application\\HotelManagement.Application.csproj": {
+              "projectPath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Application\\HotelManagement.Application.csproj"
             },
-            "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Domain\\HotelManagement.Domain.csproj": {
-              "projectPath": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Domain\\HotelManagement.Domain.csproj"
+            "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Domain\\HotelManagement.Domain.csproj": {
+              "projectPath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Domain\\HotelManagement.Domain.csproj"
             },
-            "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\admin\\Documents\\Zalo Received Files\\BE\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj"
+            "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj"
             }
           }
         }
@@ -3622,11 +3614,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -3661,24 +3648,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[7.0.19, 7.0.19]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[7.0.19, 7.0.19]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[7.0.19, 7.0.19]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[7.0.19, 7.0.19]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -3687,7 +3656,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.300\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.410\\RuntimeIdentifierGraph.json"
       }
     }
   }
