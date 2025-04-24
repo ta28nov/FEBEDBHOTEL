@@ -14,30 +14,28 @@ const roomEndpoints = {
   updateRoom: (id, roomData) => apiClient.put(`/rooms/${id}`, roomData),
   deleteRoom: (id) => apiClient.delete(`/rooms/${id}`),
 
-  // Lọc phòng và kiểm tra tình trạng
-  filterRooms: (filters) => apiClient.get("/rooms/filter", { params: filters }),
-  checkAvailability: (startDate, endDate, guests) =>
-    apiClient.get("/rooms/availability", {
-      params: { start_date: startDate, end_date: endDate, guests },
-    }),
+  // Lấy phòng có sẵn
+  checkAvailability: (params) =>
+    apiClient.get("/rooms/available", { params }),
 
-  // Loại phòng
-  getRoomTypes: () => apiClient.get("/rooms/types"),
+  // Loại phòng (Moved from /rooms/types)
+  getRoomTypes: () => apiClient.get("/roomtypes"),
+  getRoomTypeById: (id) => apiClient.get(`/roomtypes/${id}`),
 
-  // Tiện nghi phòng
+  // Tiện nghi phòng (Path is correct per spec)
   getRoomAmenities: () => apiClient.get("/rooms/amenities"),
 
-  // Upload hình ảnh phòng
-  uploadRoomImage: (roomId, formData) => {
-    return apiClient.post(`/rooms/${roomId}/images`, formData, {
+  // Tải lên hình ảnh (Cho Loại Phòng, path updated, roomId removed from path)
+  uploadRoomTypeImage: (formData) => {
+    return apiClient.post(`/rooms/image`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     })
   },
 
-  // Xóa hình ảnh phòng
-  deleteRoomImage: (roomId, imageId) => apiClient.delete(`/rooms/${roomId}/images/${imageId}`),
+  // Xóa hình ảnh (Của Loại Phòng)
+  deleteRoomTypeImage: (roomId, imageId) => apiClient.delete(`/rooms/${roomId}/image/${imageId}`),
 }
 
 export default roomEndpoints

@@ -19,3 +19,6 @@ npm install
 # Chạy ứng dụng ở môi trường development
 npm run dev
 
+Toàn bộ chức năng quản lý Loại Phòng (Thêm/Sửa/Xóa/Xem chi tiết Loại Phòng) hoàn toàn chưa được đáp ứng. Cần phải xây dựng một khu vực quản lý Loại Phòng riêng (ví dụ: pages/Admin/RoomTypes) với các component và service tương ứng để gọi các API /api/roomtypes/*.
+
+làm sausau

@@ -6,44 +6,50 @@
  * Vai trò: Component hiển thị danh sách phòng và các chức năng quản lý phòng.
  * Chức năng:
  * - Hiển thị danh sách phòng dưới dạng bảng
- * - Tìm kiếm và lọc phòng
+ * - Tìm kiếm phòng (toàn cục)
  * - Thêm, sửa, xóa phòng
  * - Phân trang danh sách phòng
  *
- * Quyền truy cập: Admin và Employee
+ * Quyền truy cập: Admin và Employee (Xóa chỉ Admin)
  */
 
 import { useState, useEffect, useMemo } from "react"
 import { useTable, useSortBy, useGlobalFilter, usePagination } from "react-table"
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaFilter } from "react-icons/fa"
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaImages } from "react-icons/fa"
 import { toast } from "react-toastify"
 import { motion } from "framer-motion"
-import roomService from "../../../services/roomService"
-import { ROOM_TYPES, ROOM_STATUS, formatCurrency } from "../../../config/constants"
-import RoomForm from "./RoomForm"
+import roomService from "../../../services/roomService" // Corrected service
+// Import AuthContext to check user role
+import { useAuth } from "../../../context/AuthContext"
+import { formatCurrency } from "../../../config/constants" // Import directly if needed
+import RoomForm from "./RoomForm" // Assuming RoomForm is updated
+import RoomTypeImageManager from './RoomTypeImageManager'; // Import the new component
 import "./RoomList.css"
 
 const RoomList = () => {
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [currentRoom, setCurrentRoom] = useState(null)
-  const [filters, setFilters] = useState({
-    type: "",
-    status: "",
-    minPrice: "",
-    maxPrice: "",
-  })
+  const [currentRoom, setCurrentRoom] = useState(null) // For editing
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [showImageManagerModal, setShowImageManagerModal] = useState(false);
+  const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(null);
+  const [selectedRoomTypeName, setSelectedRoomTypeName] = useState('');
 
-  // Fetch rooms data
+  // Get current user from AuthContext
+  const { currentUser } = useAuth()
+
+  // Fetch rooms data using the corrected service
   const fetchRooms = async () => {
     try {
       setLoading(true)
-      const response = await roomService.getAllRooms()
-      setRooms(response.data)
+      const response = await roomService.getAllRooms() // Calls GET /api/rooms
+      // Ensure response.data is an array
+      setRooms(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       toast.error("Không thể tải danh sách phòng")
-      console.error(error)
+      console.error("Fetch rooms error:", error)
+      setRooms([]) // Set to empty array on error
     } finally {
       setLoading(false)
     }
@@ -53,80 +59,58 @@ const RoomList = () => {
     fetchRooms()
   }, [])
 
-  // Handle room filtering
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target
-    setFilters((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const applyFilters = async () => {
-    try {
-      setLoading(true)
-      const response = await roomService.filterRooms(filters)
-      setRooms(response.data)
-      toast.success("Lọc phòng thành công")
-    } catch (error) {
-      toast.error("Không thể lọc phòng")
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const resetFilters = () => {
-    setFilters({
-      type: "",
-      status: "",
-      minPrice: "",
-      maxPrice: "",
-    })
-    fetchRooms()
-  }
-
   // Handle room operations
   const handleAddRoom = () => {
-    setCurrentRoom(null)
-    setShowForm(true)
+    setCurrentRoom(null) // Clear current room
+    setIsEditMode(false)
+    setShowForm(true) // Show the form in 'add' mode
   }
 
   const handleEditRoom = (room) => {
-    setCurrentRoom(room)
-    setShowForm(true)
+    setCurrentRoom(room) // Set the room to edit
+    setIsEditMode(true)
+    setShowForm(true) // Show the form in 'edit' mode
   }
+
+  // Function to open the image manager modal
+  const handleManageImages = (room) => {
+    setSelectedRoomTypeId(room.roomTypeId);
+    setSelectedRoomTypeName(room.roomTypeName);
+    setShowImageManagerModal(true);
+  };
 
   const handleDeleteRoom = async (id) => {
+    // Double-check admin role before proceeding (although button visibility handles this too)
+    if (currentUser?.role !== 'admin') {
+        toast.error("Bạn không có quyền xóa phòng.");
+        return;
+    }
+
     if (window.confirm("Bạn có chắc chắn muốn xóa phòng này?")) {
       try {
-        await roomService.deleteRoom(id)
+        setLoading(true); // Indicate loading during delete
+        await roomService.deleteRoom(id) // Calls DELETE /api/rooms/{id}
         toast.success("Xóa phòng thành công")
-        fetchRooms()
+        fetchRooms() // Refetch list after successful delete
       } catch (error) {
-        toast.error("Không thể xóa phòng")
-        console.error(error)
+        // Check for specific error messages if available
+        const errorMessage = error.response?.data?.message || "Không thể xóa phòng";
+        toast.error(errorMessage)
+        console.error("Delete room error:", error)
+        setLoading(false); // Ensure loading is reset on error
       }
+      // No finally block needed here as fetchRooms handles its own loading state
     }
   }
 
-  const handleFormSubmit = async (roomData) => {
-    try {
-      if (currentRoom) {
-        // Update existing room
-        await roomService.updateRoom(currentRoom.id, roomData)
-        toast.success("Cập nhật phòng thành công")
-      } else {
-        // Create new room
-        await roomService.createRoom(roomData)
-        toast.success("Thêm phòng mới thành công")
-      }
-      setShowForm(false)
-      fetchRooms()
-    } catch (error) {
-      toast.error(currentRoom ? "Không thể cập nhật phòng" : "Không thể thêm phòng mới")
-      console.error(error)
-    }
+  // This function will be called by RoomForm upon successful submission
+  const handleFormSuccess = () => {
+    setShowForm(false)
+    setCurrentRoom(null)
+    fetchRooms() // Refetch data after add/edit
   }
 
-  // Table columns
+  // Table columns updated to match API spec response
   const columns = useMemo(
     () => [
       {
@@ -135,49 +119,61 @@ const RoomList = () => {
       },
       {
         Header: "Loại phòng",
-        accessor: "type",
-        Cell: ({ value }) => ROOM_TYPES.find((type) => type.value === value)?.label || value,
+        accessor: "roomTypeName", // Use roomTypeName from API response
       },
       {
-        Header: "Số giường",
-        accessor: "beds",
+        Header: "Tầng",
+        accessor: "floor", // Added Floor column
       },
       {
-        Header: "Sức chứa",
+        Header: "Giá Cơ Bản", // From RoomType via API response
+        accessor: "basePrice",
+        Cell: ({ value }) => formatCurrency(value),
+      },
+      {
+        Header: "Sức chứa", // From RoomType via API response
         accessor: "capacity",
         Cell: ({ value }) => `${value} người`,
-      },
-      {
-        Header: "Giá phòng",
-        accessor: "price",
-        Cell: ({ value }) => formatCurrency(value),
       },
       {
         Header: "Trạng thái",
         accessor: "status",
         Cell: ({ value }) => {
-          const status = ROOM_STATUS.find((status) => status.value === value)
-          return <span className={`status-badge status-${value}`}>{status?.label || value}</span>
+          // Basic status display, can be enhanced with badges/colors
+          // Assuming value is like "Available", "Occupied", "Maintenance"
+          const statusClass = `status-${value?.toLowerCase().replace(' ', '-') || 'unknown'}`;
+          return <span className={`status-badge ${statusClass}`}>{value || 'N/A'}</span>
         },
       },
       {
         Header: "Thao tác",
+        id: 'actions',
         Cell: ({ row }) => (
           <div className="action-buttons">
             <button className="edit-button" onClick={() => handleEditRoom(row.original)} title="Chỉnh sửa">
               <FaEdit />
             </button>
-            <button className="delete-button" onClick={() => handleDeleteRoom(row.original.id)} title="Xóa">
-              <FaTrash />
-            </button>
+            <button
+                className="manage-images-button"
+                onClick={() => handleManageImages(row.original)}
+                title="Quản lý ảnh"
+             >
+                <FaImages />
+             </button>
+            {/* Conditionally render delete button only for Admins */}
+            {currentUser?.role === 'admin' && (
+              <button className="delete-button" onClick={() => handleDeleteRoom(row.original.id)} title="Xóa">
+                <FaTrash />
+              </button>
+            )}
           </div>
         ),
       },
     ],
-    [],
+    [currentUser], // Add currentUser as dependency for the delete button logic
   )
 
-  // React Table hooks
+  // React Table hooks (remain mostly the same)
   const {
     getTableProps,
     getTableBodyProps,
@@ -197,173 +193,173 @@ const RoomList = () => {
   } = useTable(
     {
       columns,
-      data: rooms,
+      data: rooms, // Use the fetched rooms data
       initialState: { pageIndex: 0, pageSize: 10 },
+      // Disable multi-sort, filters if not needed
+      disableSortBy: false,
+      disableFilters: true, // Global filter is separate
+      disableGlobalFilter: false,
     },
     useGlobalFilter,
-    useSortBy,
+    useSortBy, // Keep sorting if desired
     usePagination,
   )
 
   const { globalFilter, pageIndex, pageSize } = state
 
+  // Loading indicator
+  if (loading && !showForm && !showImageManagerModal) {
+    return <div className="loading-container"><div className="loading-spinner"></div><p>Đang tải dữ liệu phòng...</p></div>;
+  }
+
   return (
     <div className="room-list-container">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="page-header"
-      >
-        <h1>Quản lý phòng</h1>
-        <button className="add-button" onClick={handleAddRoom}>
-          <FaPlus /> Thêm phòng mới
-        </button>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="filter-section"
-      >
-        <div className="search-box">
-          <FaSearch />
-          <input
-            value={globalFilter || ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Tìm kiếm phòng..."
-          />
-        </div>
-
-        <div className="filters">
-          <div className="filter-group">
-            <label>Loại phòng:</label>
-            <select name="type" value={filters.type} onChange={handleFilterChange}>
-              <option value="">Tất cả</option>
-              {ROOM_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Trạng thái:</label>
-            <select name="status" value={filters.status} onChange={handleFilterChange}>
-              <option value="">Tất cả</option>
-              {ROOM_STATUS.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Giá từ:</label>
-            <input
-              type="number"
-              name="minPrice"
-              value={filters.minPrice}
-              onChange={handleFilterChange}
-              placeholder="Giá tối thiểu"
-            />
-          </div>
-
-          <div className="filter-group">
-            <label>Giá đến:</label>
-            <input
-              type="number"
-              name="maxPrice"
-              value={filters.maxPrice}
-              onChange={handleFilterChange}
-              placeholder="Giá tối đa"
-            />
-          </div>
-
-          <button className="filter-button" onClick={applyFilters}>
-            <FaFilter /> Lọc
-          </button>
-          <button className="reset-button" onClick={resetFilters}>
-            Đặt lại
-          </button>
-        </div>
-      </motion.div>
-
-      {loading ? (
-        <div className="loading">Đang tải dữ liệu...</div>
-      ) : (
+      {/* Conditionally render the RoomForm */} 
+      {showForm ? (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="table-container"
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           transition={{ duration: 0.3 }}
         >
-          <table {...getTableProps()} className="room-table">
-            <thead>
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      key={column.id}
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
-                      className={column.isSorted ? (column.isSortedDesc ? "sort-desc" : "sort-asc") : ""}
-                    >
-                      {column.render("Header")}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {page.map((row) => {
-                prepareRow(row)
-                return (
-                  <tr {...row.getRowProps()} key={row.id}>
-                    {row.cells.map((cell) => (
-                      <td {...cell.getCellProps()} key={cell.id}>
-                        {cell.render("Cell")}
-                      </td>
+           <RoomForm
+            room={currentRoom} // Pass the room data for editing, null for adding
+            isEditMode={isEditMode}
+            onClose={() => setShowForm(false)} // Prop to close the form
+            onSuccess={handleFormSuccess} // Prop to handle successful submission
+          />
+        </motion.div>
+      ) : null}
+
+      {/* Conditionally render the RoomTypeImageManager Modal */} 
+      {showImageManagerModal ? (
+          <RoomTypeImageManager
+            roomTypeId={selectedRoomTypeId}
+            roomTypeName={selectedRoomTypeName}
+            onClose={() => {
+                setShowImageManagerModal(false);
+                setSelectedRoomTypeId(null);
+                setSelectedRoomTypeName('');
+                // Optional: Refetch rooms if image changes might affect display (e.g., primary image)
+                // fetchRooms();
+            }}
+          />
+      ) : null}
+
+      {/* Render the main list/table only when forms/modals are not shown */} 
+      {!showForm && !showImageManagerModal ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="page-header">
+            <h1>Quản lý phòng</h1>
+            <button className="add-button" onClick={handleAddRoom}>
+              <FaPlus /> Thêm phòng mới
+            </button>
+          </div>
+
+          <div className="table-controls">
+            <div className="search-box">
+              <FaSearch />
+              <input
+                value={globalFilter || ""}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                placeholder={`Tìm kiếm trong ${rooms.length} phòng...`}
+              />
+            </div>
+            {/* Removed filter section */}
+          </div>
+
+          {/* Render the table */} 
+          <div className="table-responsive">
+             <table {...getTableProps()} className="room-table">
+              <thead>
+                {headerGroups.map(headerGroup => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map(column => (
+                      <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                        {column.render('Header')}
+                        <span>
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? ' 🔽'
+                              : ' 🔼'
+                            : ''}
+                        </span>
+                      </th>
                     ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-
-          <div className="pagination">
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-              {"<<"}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-              {"<"}
-            </button>
-            <span>
-              Trang{" "}
-              <strong>
-                {pageIndex + 1} / {pageOptions.length}
-              </strong>
-            </span>
-            <button onClick={() => nextPage()} disabled={!canNextPage}>
-              {">"}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-              {">>"}
-            </button>
-            <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <option key={size} value={size}>
-                  Hiển thị {size}
-                </option>
-              ))}
-            </select>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {page.map(row => {
+                  prepareRow(row)
+                  return (
+                    <tr {...row.getRowProps()}>
+                      {row.cells.map(cell => (
+                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                      ))}
+                    </tr>
+                  )
+                })}
+                {page.length === 0 && (
+                  <tr>
+                    <td colSpan={columns.length} className="no-data">
+                      Không tìm thấy phòng nào.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </motion.div>
-      )}
 
-      {showForm && <RoomForm room={currentRoom} onSubmit={handleFormSubmit} onCancel={() => setShowForm(false)} />}
+           {/* Pagination Controls */} 
+          {pageOptions.length > 1 && (
+             <div className="pagination-controls">
+                <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+                  {'<<'}
+                </button>{' '}
+                <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+                  {'<'}
+                </button>{' '}
+                <span>
+                  Trang{' '}
+                  <strong>
+                    {pageIndex + 1} trên {pageOptions.length}
+                  </strong>{' '}
+                </span>
+                <button onClick={() => nextPage()} disabled={!canNextPage}>
+                  {'>'}
+                </button>{' '}
+                <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+                  {'>>'}
+                </button>{' '}
+                <span>
+                  | Tới trang:{' '}
+                  <input
+                    type="number"
+                    defaultValue={pageIndex + 1}
+                    onChange={e => {
+                      const pageNum = e.target.value ? Number(e.target.value) - 1 : 0;
+                      gotoPage(pageNum);
+                    }}
+                    style={{ width: '50px' }}
+                  />
+                </span>{' '}
+                <select
+                  value={pageSize}
+                  onChange={e => {
+                    setPageSize(Number(e.target.value));
+                  }}
+                >
+                  {[10, 20, 30, 40, 50].map(pageSize => (
+                    <option key={pageSize} value={pageSize}>
+                      Hiển thị {pageSize}
+                    </option>
+                  ))}
+                </select>
+              </div>
+          )}
+        </motion.div>
+      ) : null}
     </div>
   )
 }

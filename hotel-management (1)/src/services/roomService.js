@@ -1,15 +1,17 @@
 /**
  * Dịch vụ phòng
  *
- * Dịch vụ này xử lý các thao tác liên quan đến phòng
+ * Dịch vụ này xử lý các thao tác liên quan đến phòng và loại phòng
  */
 
 import { roomEndpoints } from "../api"
 
 const roomService = {
-  // Các thao tác với phòng
+  // === Room Operations ===
+
   getAllRooms: async () => {
     try {
+      // Calls GET /api/rooms
       return await roomEndpoints.getAllRooms()
     } catch (error) {
       console.error("Lỗi lấy tất cả phòng:", error)
@@ -19,6 +21,7 @@ const roomService = {
 
   getRoomById: async (id) => {
     try {
+      // Calls GET /api/rooms/{id}
       return await roomEndpoints.getRoomById(id)
     } catch (error) {
       console.error(`Lỗi lấy phòng ${id}:`, error)
@@ -26,36 +29,48 @@ const roomService = {
     }
   },
 
+  /**
+   * Creates a new room.
+   * @param {object} roomData - Object containing { roomNumber, roomTypeId, status, floor }
+   */
   createRoom: async (roomData) => {
     try {
-      // Xử lý dữ liệu trước khi gửi đi nếu cần
-      const formattedData = {
-        ...roomData,
-        price: Number(roomData.price),
-        capacity: Number(roomData.capacity),
-        beds: Number(roomData.beds),
-        amenities: Array.isArray(roomData.amenities) ? roomData.amenities : [],
+      // Validate required fields (basic check)
+      if (!roomData.roomNumber || !roomData.roomTypeId || !roomData.status || !roomData.floor) {
+          throw new Error("Thiếu thông tin bắt buộc để tạo phòng.");
       }
-
-      return await roomEndpoints.createRoom(formattedData)
+      // Prepare payload exactly as spec requires
+      const payload = {
+        roomNumber: String(roomData.roomNumber),
+        roomTypeId: Number(roomData.roomTypeId),
+        status: String(roomData.status),
+        floor: Number(roomData.floor),
+      }
+      // Calls POST /api/rooms
+      return await roomEndpoints.createRoom(payload)
     } catch (error) {
       console.error("Lỗi tạo phòng:", error)
       throw error
     }
   },
 
+  /**
+   * Updates an existing room.
+   * @param {number|string} id - The ID of the room to update.
+   * @param {object} roomData - Object containing optional fields { roomNumber, roomTypeId, status, floor }
+   */
   updateRoom: async (id, roomData) => {
     try {
-      // Xử lý dữ liệu trước khi gửi đi nếu cần
-      const formattedData = {
-        ...roomData,
-        price: Number(roomData.price),
-        capacity: Number(roomData.capacity),
-        beds: Number(roomData.beds),
-        amenities: Array.isArray(roomData.amenities) ? roomData.amenities : [],
-      }
+      // Prepare payload with only the fields allowed by the spec
+      // Only include fields that are provided in roomData
+      const payload = {}
+      if (roomData.hasOwnProperty('roomNumber')) payload.roomNumber = String(roomData.roomNumber);
+      if (roomData.hasOwnProperty('roomTypeId')) payload.roomTypeId = Number(roomData.roomTypeId);
+      if (roomData.hasOwnProperty('status')) payload.status = String(roomData.status);
+      if (roomData.hasOwnProperty('floor')) payload.floor = Number(roomData.floor);
 
-      return await roomEndpoints.updateRoom(id, formattedData)
+      // Calls PUT /api/rooms/{id}
+      return await roomEndpoints.updateRoom(id, payload)
     } catch (error) {
       console.error(`Lỗi cập nhật phòng ${id}:`, error)
       throw error
@@ -64,6 +79,7 @@ const roomService = {
 
   deleteRoom: async (id) => {
     try {
+      // Calls DELETE /api/rooms/{id}
       return await roomEndpoints.deleteRoom(id)
     } catch (error) {
       console.error(`Lỗi xóa phòng ${id}:`, error)
@@ -71,38 +87,29 @@ const roomService = {
     }
   },
 
-  // Lọc phòng và kiểm tra tình trạng
-  filterRooms: async (filters) => {
-    try {
-      // Định dạng lại các tham số lọc để phù hợp với API
-      const formattedFilters = {
-        type: filters.type || undefined,
-        status: filters.status || undefined,
-        min_price: filters.minPrice || undefined,
-        max_price: filters.maxPrice || undefined,
-        capacity: filters.capacity || undefined,
-        amenities: filters.amenities || undefined,
-      }
+  // === Availability Check ===
 
-      return await roomEndpoints.filterRooms(formattedFilters)
-    } catch (error) {
-      console.error("Lỗi lọc phòng:", error)
-      throw error
-    }
-  },
-
-  checkAvailability: async (startDate, endDate, guests) => {
+  /**
+   * Checks room availability for given dates.
+   * @param {string} checkIn - Check-in date/time in ISO 8601 format.
+   * @param {string} checkOut - Check-out date/time in ISO 8601 format.
+   */
+  checkAvailability: async (checkIn, checkOut) => {
     try {
-      return await roomEndpoints.checkAvailability(startDate, endDate, guests)
+       // Calls GET /api/rooms/available
+       const params = { checkIn, checkOut };
+      return await roomEndpoints.checkAvailability(params)
     } catch (error) {
       console.error("Lỗi kiểm tra tình trạng phòng:", error)
       throw error
     }
   },
 
-  // Loại phòng và tiện nghi
+  // === Room Type and Amenities (Used for Forms/Display) ===
+
   getRoomTypes: async () => {
     try {
+      // Calls GET /api/roomtypes
       return await roomEndpoints.getRoomTypes()
     } catch (error) {
       console.error("Lỗi lấy loại phòng:", error)
@@ -110,8 +117,21 @@ const roomService = {
     }
   },
 
+  // ADDED: Get Room Type Details by ID
+  getRoomTypeById: async (id) => {
+     try {
+       // Calls GET /api/roomtypes/{id}
+       // This should return details including the images array
+       return await roomEndpoints.getRoomTypeById(id);
+     } catch (error) {
+       console.error(`Lỗi lấy chi tiết loại phòng ${id}:`, error);
+       throw error;
+     }
+  },
+
   getRoomAmenities: async () => {
     try {
+      // Calls GET /api/rooms/amenities
       return await roomEndpoints.getRoomAmenities()
     } catch (error) {
       console.error("Lỗi lấy tiện nghi phòng:", error)
@@ -119,25 +139,40 @@ const roomService = {
     }
   },
 
-  // Upload hình ảnh phòng
-  uploadRoomImage: async (roomId, imageFile) => {
+  // === Room Type Image Management ===
+
+  /**
+   * Uploads an image for a specific Room Type.
+   * @param {object} imageData - Object containing { roomTypeId, imageFile, isPrimary }
+   */
+  uploadRoomTypeImage: async ({ roomTypeId, imageFile, isPrimary }) => {
     try {
       const formData = new FormData()
-      formData.append("image", imageFile)
-
-      return await roomEndpoints.uploadRoomImage(roomId, formData)
+      formData.append("RoomTypeId", roomTypeId)
+      formData.append("Image", imageFile)
+      if (isPrimary !== undefined) {
+         formData.append("IsPrimary", isPrimary)
+      }
+      // Calls POST /api/rooms/image
+      return await roomEndpoints.uploadRoomTypeImage(formData)
     } catch (error) {
-      console.error("Lỗi upload hình ảnh phòng:", error)
+      console.error(`Lỗi upload hình ảnh cho loại phòng ${roomTypeId}:`, error)
       throw error
     }
   },
 
-  // Xóa hình ảnh phòng
-  deleteRoomImage: async (roomId, imageId) => {
+  /**
+   * Deletes an image associated with a Room Type.
+   * @param {number|string} imageId - The ID of the image (feature) to delete.
+   * @param {number|string} [roomId='placeholder'] - Placeholder or context room ID (confirm necessity with backend). Defaults to 'placeholder'.
+   */
+   deleteRoomTypeImage: async (imageId, roomId = 'placeholder') => {
     try {
-      return await roomEndpoints.deleteRoomImage(roomId, imageId)
+       // Calls DELETE /api/rooms/{roomId}/image/{imageId}
+       // The roomId might be required by the URL structure even if not used in backend logic.
+      return await roomEndpoints.deleteRoomTypeImage(roomId, imageId)
     } catch (error) {
-      console.error("Lỗi xóa hình ảnh phòng:", error)
+      console.error(`Lỗi xóa hình ảnh ${imageId}:`, error)
       throw error
     }
   },
