@@ -5,10 +5,9 @@
  *
  * Vai trò: Trang quản lý hóa đơn cho admin và nhân viên.
  * Chức năng:
- * - Hiển thị danh sách hóa đơn
- * - Tạo hóa đơn mới
- * - Xem chi tiết hóa đơn
- * - In hóa đơn
+ * - Hiển thị danh sách hóa đơn (dựa trên booking)
+ * - Lọc hóa đơn
+ * - Cập nhật trạng thái thanh toán
  *
  * Quyền truy cập: Admin và Employee
  */
@@ -16,7 +15,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useTable, useSortBy, useGlobalFilter, usePagination } from "react-table"
 import { motion } from "framer-motion"
-import { FaEye, FaPrint, FaPlus, FaSearch, FaFilter } from "react-icons/fa"
+import { FaSearch, FaFilter } from "react-icons/fa"
 import { format } from "date-fns"
 import { toast } from "react-toastify"
 import bookingService from "../../../services/bookingService"
@@ -26,6 +25,7 @@ import "./Invoices.css"
 const Invoices = () => {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(null)
   const [filters, setFilters] = useState({
     paymentStatus: "",
     startDate: "",
@@ -79,29 +79,18 @@ const Invoices = () => {
     fetchBookings()
   }
 
-  // Handle invoice operations
-  const handleViewInvoice = async (bookingId) => {
+  // Handle updating payment status
+  const handleUpdatePaymentStatus = async (bookingId, newStatus) => {
+    setIsUpdatingStatus(bookingId)
     try {
-      const response = await bookingService.createInvoice(bookingId)
-      // In a real application, you would open a modal or navigate to a new page
-      // to display the invoice details
-      console.log("Invoice details:", response.data)
-      toast.success("Xem hóa đơn thành công")
+      await bookingService.updatePaymentStatus(bookingId, { paymentStatus: newStatus })
+      toast.success("Cập nhật trạng thái thanh toán thành công!")
+      fetchBookings()
     } catch (error) {
-      toast.error("Không thể tạo hóa đơn")
-      console.error(error)
-    }
-  }
-
-  const handlePrintInvoice = async (bookingId) => {
-    try {
-      const response = await bookingService.createInvoice(bookingId)
-      // In a real application, you would generate a PDF and open it in a new window
-      console.log("Print invoice:", response.data)
-      toast.success("Chuẩn bị in hóa đơn")
-    } catch (error) {
-      toast.error("Không thể tạo hóa đơn để in")
-      console.error(error)
+      toast.error("Không thể cập nhật trạng thái thanh toán.")
+      console.error("Error updating payment status:", error)
+    } finally {
+      setIsUpdatingStatus(null)
     }
   }
 
@@ -124,12 +113,12 @@ const Invoices = () => {
       {
         Header: "Ngày nhận phòng",
         accessor: "checkInDate",
-        Cell: ({ value }) => format(new Date(value), "dd/MM/yyyy"),
+        Cell: ({ value }) => (value ? format(new Date(value), "dd/MM/yyyy") : "N/A"),
       },
       {
         Header: "Ngày trả phòng",
         accessor: "checkOutDate",
-        Cell: ({ value }) => format(new Date(value), "dd/MM/yyyy"),
+        Cell: ({ value }) => (value ? format(new Date(value), "dd/MM/yyyy") : "N/A"),
       },
       {
         Header: "Tổng tiền",
@@ -139,26 +128,30 @@ const Invoices = () => {
       {
         Header: "Trạng thái thanh toán",
         accessor: "paymentStatus",
-        Cell: ({ value }) => {
-          const status = PAYMENT_STATUS.find((status) => status.value === value)
-          return <span className={`status-badge payment-status-${value}`}>{status?.label || value}</span>
+        Cell: ({ value, row }) => {
+          const bookingId = row.original.id
+
+          return (
+            <div className="payment-status-cell">
+              <select
+                value={value || ''}
+                onChange={(e) => handleUpdatePaymentStatus(bookingId, e.target.value)}
+                disabled={isUpdatingStatus === bookingId}
+                className={`status-select payment-status-${value}`}
+              >
+                {PAYMENT_STATUS.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+              {isUpdatingStatus === bookingId && <span className="status-updating-spinner"></span>}
+            </div>
+          )
         },
       },
-      {
-        Header: "Thao tác",
-        Cell: ({ row }) => (
-          <div className="action-buttons">
-            <button className="view-button" onClick={() => handleViewInvoice(row.original.id)} title="Xem hóa đơn">
-              <FaEye />
-            </button>
-            <button className="print-button" onClick={() => handlePrintInvoice(row.original.id)} title="In hóa đơn">
-              <FaPrint />
-            </button>
-          </div>
-        ),
-      },
     ],
-    [],
+    [isUpdatingStatus],
   )
 
   // React Table hooks
@@ -200,9 +193,6 @@ const Invoices = () => {
         className="page-header"
       >
         <h1>Quản lý hóa đơn</h1>
-        <button className="add-button">
-          <FaPlus /> Tạo hóa đơn mới
-        </button>
       </motion.div>
 
       <motion.div
@@ -253,7 +243,7 @@ const Invoices = () => {
       </motion.div>
 
       {loading ? (
-        <div className="loading">Đang tải dữ liệu...</div>
+        <div className="loading-spinner">Đang tải dữ liệu...</div>
       ) : (
         <motion.div
           initial={{ opacity: 0 }}
@@ -272,6 +262,13 @@ const Invoices = () => {
                       className={column.isSorted ? (column.isSortedDesc ? "sort-desc" : "sort-asc") : ""}
                     >
                       {column.render("Header")}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
                     </th>
                   ))}
                 </tr>
@@ -294,24 +291,26 @@ const Invoices = () => {
           </table>
 
           <div className="pagination">
-            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-              {"<<"}
-            </button>
-            <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-              {"<"}
-            </button>
+            <div>
+              <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+                {"<<"}
+              </button>
+              <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+                {"<"}
+              </button>
+              <button onClick={() => nextPage()} disabled={!canNextPage}>
+                {">"}
+              </button>
+              <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+                {">>"}
+              </button>
+            </div>
             <span>
               Trang{" "}
               <strong>
                 {pageIndex + 1} / {pageOptions.length}
               </strong>
             </span>
-            <button onClick={() => nextPage()} disabled={!canNextPage}>
-              {">"}
-            </button>
-            <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-              {">>"}
-            </button>
             <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
               {[10, 20, 30, 40, 50].map((size) => (
                 <option key={size} value={size}>
