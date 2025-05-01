@@ -15,48 +15,61 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useTable, useSortBy, useGlobalFilter, usePagination } from "react-table"
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaImages } from "react-icons/fa"
+import { FaEdit, FaTrash, FaPlus, FaSearch } from "react-icons/fa"
 import { toast } from "react-toastify"
 import { motion } from "framer-motion"
 import roomService from "../../../services/roomService" // Corrected service
 // Import AuthContext to check user role
 import { useAuth } from "../../../context/AuthContext"
-import { formatCurrency } from "../../../config/constants" // Import directly if needed
+import { formatCurrency, ROLES } from "../../../config/constants" // Import directly if needed
 import RoomForm from "./RoomForm" // Assuming RoomForm is updated
-import RoomTypeImageManager from './RoomTypeImageManager'; // Import the new component
+import ConfirmationModal from "../../common/ConfirmationModal" // Đường dẫn đúng?
 import "./RoomList.css"
 
 const RoomList = () => {
   const [rooms, setRooms] = useState([])
+  const [roomTypes, setRoomTypes] = useState([]) // State cho loại phòng
   const [loading, setLoading] = useState(true)
+  const [loadingError, setLoadingError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [currentRoom, setCurrentRoom] = useState(null) // For editing
   const [isEditMode, setIsEditMode] = useState(false)
-  const [showImageManagerModal, setShowImageManagerModal] = useState(false);
-  const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(null);
-  const [selectedRoomTypeName, setSelectedRoomTypeName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false) // State quản lý trạng thái submit form
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [roomToDelete, setRoomToDelete] = useState(null)
 
   // Get current user from AuthContext
   const { currentUser } = useAuth()
 
-  // Fetch rooms data using the corrected service
-  const fetchRooms = async () => {
+  // Check Permissions using actual user data
+  const isAdmin = currentUser?.role === ROLES.ADMIN;
+  const canEdit = currentUser?.role === ROLES.ADMIN || currentUser?.role === ROLES.EMPLOYEE;
+  // Ensure ROLES.ADMIN and ROLES.EMPLOYEE match the values from your constants/backend
+
+  // Fetch rooms and room types data
+  const fetchData = async () => {
+    setLoading(true)
+    setLoadingError(null)
     try {
-      setLoading(true)
-      const response = await roomService.getAllRooms() // Calls GET /api/rooms
-      // Ensure response.data is an array
-      setRooms(Array.isArray(response.data) ? response.data : [])
+      const [roomsResponse, roomTypesResponse] = await Promise.all([
+        roomService.getAllRooms(),
+        roomService.getRoomTypes()
+      ])
+      setRooms(Array.isArray(roomsResponse.data) ? roomsResponse.data : [])
+      setRoomTypes(Array.isArray(roomTypesResponse.data) ? roomTypesResponse.data : [])
     } catch (error) {
-      toast.error("Không thể tải danh sách phòng")
-      console.error("Fetch rooms error:", error)
-      setRooms([]) // Set to empty array on error
+      toast.error("Không thể tải dữ liệu phòng hoặc loại phòng.")
+      console.error("Fetch data error:", error)
+      setLoadingError("Lỗi tải dữ liệu. Vui lòng thử lại.")
+      setRooms([])
+      setRoomTypes([])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchRooms()
+    fetchData()
   }, [])
 
   // Handle room operations
@@ -72,97 +85,110 @@ const RoomList = () => {
     setShowForm(true) // Show the form in 'edit' mode
   }
 
-  // Function to open the image manager modal
-  const handleManageImages = (room) => {
-    setSelectedRoomTypeId(room.roomTypeId);
-    setSelectedRoomTypeName(room.roomTypeName);
-    setShowImageManagerModal(true);
-  };
-
-  const handleDeleteRoom = async (id) => {
-    // Double-check admin role before proceeding (although button visibility handles this too)
-    if (currentUser?.role !== 'admin') {
-        toast.error("Bạn không có quyền xóa phòng.");
-        return;
+  const handleDeleteRoom = (room) => { // Nhận cả object room
+    if (!isAdmin) {
+      toast.error("Bạn không có quyền xóa phòng.")
+      return
     }
+    setRoomToDelete(room)
+    setShowDeleteConfirm(true)
+  }
 
-    if (window.confirm("Bạn có chắc chắn muốn xóa phòng này?")) {
-      try {
-        setLoading(true); // Indicate loading during delete
-        await roomService.deleteRoom(id) // Calls DELETE /api/rooms/{id}
-        toast.success("Xóa phòng thành công")
-        fetchRooms() // Refetch list after successful delete
-      } catch (error) {
-        // Check for specific error messages if available
-        const errorMessage = error.response?.data?.message || "Không thể xóa phòng";
-        toast.error(errorMessage)
-        console.error("Delete room error:", error)
-        setLoading(false); // Ensure loading is reset on error
+  const confirmDeleteRoom = async () => {
+    if (!roomToDelete || !isAdmin) return
+    // Có thể thêm isSubmitting cho nút xóa nếu cần
+    try {
+      await roomService.deleteRoom(roomToDelete.id)
+      toast.success(`Xóa phòng "${roomToDelete.roomNumber}" thành công!`)
+      fetchData()
+    } catch (error) {
+      let errorMsg = "Không thể xóa phòng."
+      // Check for specific 409 Conflict error (assuming backend returns 409)
+      if (error.response?.status === 409) {
+        errorMsg = `Không thể xóa phòng "${roomToDelete.roomNumber}" vì phòng này đang được sử dụng trong một đặt phòng.`
+      } else {
+        errorMsg = error.response?.data?.message || error.message || errorMsg
       }
-      // No finally block needed here as fetchRooms handles its own loading state
+      toast.error(errorMsg)
+      console.error("Delete room error:", error)
+    } finally {
+      setShowDeleteConfirm(false)
+      setRoomToDelete(null)
     }
   }
 
-  // This function will be called by RoomForm upon successful submission
-  const handleFormSuccess = () => {
-    setShowForm(false)
-    setCurrentRoom(null)
-    fetchRooms() // Refetch data after add/edit
+  // Hàm xử lý khi form được submit và validated thành công
+  const handleSaveRoom = async (roomData, roomId) => {
+    setIsSubmitting(true); // Bắt đầu submit
+    const apiCall = roomId
+      ? roomService.updateRoom(roomId, roomData)
+      : roomService.createRoom(roomData);
+    const successMsg = roomId ? "Cập nhật phòng thành công!" : "Thêm phòng mới thành công!";
+    const errorMsgBase = roomId ? "Cập nhật phòng thất bại" : "Thêm phòng mới thất bại";
+
+    try {
+      await apiCall;
+      toast.success(successMsg);
+      setShowForm(false); // Đóng form
+      setCurrentRoom(null);
+      fetchData(); // Tải lại dữ liệu
+    } catch (error) {
+      const backendError = error.response?.data?.message || error.message || "Lỗi không xác định";
+      toast.error(`${errorMsgBase}: ${backendError}`);
+      console.error("Save room error:", error);
+      // Không đóng form khi có lỗi để user sửa lại
+    } finally {
+      setIsSubmitting(false); // Kết thúc submit
+    }
+  };
+
+  // Format Status Badge/Text
+  const formatStatus = (status) => {
+    const statusText = status || 'N/A'
+    const statusClass = `status-${statusText.toLowerCase().replace(' ', '-')}`
+    // Bạn có thể tùy chỉnh text hiển thị ở đây nếu muốn
+    let displayText = statusText
+    if (status === 'available') displayText = 'Available' 
+    else if (status === 'occupied') displayText = 'Occupied'
+    else if (status === 'cleaning') displayText = 'Cleaning'
+    else if (status === 'maintenance') displayText = 'Maintenance'
+    
+    return <span className={`status-badge ${statusClass}`}>{displayText}</span>
   }
 
   // Table columns updated to match API spec response
   const columns = useMemo(
     () => [
+      { Header: "Số phòng", accessor: "roomNumber" },
+      { Header: "Loại phòng", accessor: "roomTypeName" }, // Check API response
+      { Header: "Tầng", accessor: "floor" },
       {
-        Header: "Số phòng",
-        accessor: "roomNumber",
-      },
-      {
-        Header: "Loại phòng",
-        accessor: "roomTypeName", // Use roomTypeName from API response
-      },
-      {
-        Header: "Tầng",
-        accessor: "floor", // Added Floor column
-      },
-      {
-        Header: "Giá Cơ Bản", // From RoomType via API response
+        Header: "Giá Cơ Bản", // Check API response
         accessor: "basePrice",
         Cell: ({ value }) => formatCurrency(value),
       },
       {
-        Header: "Sức chứa", // From RoomType via API response
+        Header: "Sức chứa", // Check API response
         accessor: "capacity",
         Cell: ({ value }) => `${value} người`,
       },
       {
         Header: "Trạng thái",
         accessor: "status",
-        Cell: ({ value }) => {
-          // Basic status display, can be enhanced with badges/colors
-          // Assuming value is like "Available", "Occupied", "Maintenance"
-          const statusClass = `status-${value?.toLowerCase().replace(' ', '-') || 'unknown'}`;
-          return <span className={`status-badge ${statusClass}`}>{value || 'N/A'}</span>
-        },
+        Cell: ({ value }) => formatStatus(value),
       },
       {
         Header: "Thao tác",
         id: 'actions',
         Cell: ({ row }) => (
           <div className="action-buttons">
-            <button className="edit-button" onClick={() => handleEditRoom(row.original)} title="Chỉnh sửa">
-              <FaEdit />
-            </button>
-            <button
-                className="manage-images-button"
-                onClick={() => handleManageImages(row.original)}
-                title="Quản lý ảnh"
-             >
-                <FaImages />
-             </button>
-            {/* Conditionally render delete button only for Admins */}
-            {currentUser?.role === 'admin' && (
-              <button className="delete-button" onClick={() => handleDeleteRoom(row.original.id)} title="Xóa">
+            {canEdit && (
+              <button className="edit-button" onClick={() => handleEditRoom(row.original)} title="Chỉnh sửa">
+                <FaEdit />
+              </button>
+            )}
+            {isAdmin && (
+              <button className="delete-button" onClick={() => handleDeleteRoom(row.original)} title="Xóa">
                 <FaTrash />
               </button>
             )}
@@ -170,7 +196,7 @@ const RoomList = () => {
         ),
       },
     ],
-    [currentUser], // Add currentUser as dependency for the delete button logic
+    [isAdmin, canEdit], // Dependencies remain
   )
 
   // React Table hooks (remain mostly the same)
@@ -207,70 +233,88 @@ const RoomList = () => {
 
   const { globalFilter, pageIndex, pageSize } = state
 
-  // Loading indicator
-  if (loading && !showForm && !showImageManagerModal) {
-    return <div className="loading-container"><div className="loading-spinner"></div><p>Đang tải dữ liệu phòng...</p></div>;
+  // Skeleton Loader
+  const renderSkeleton = (rowCount = 10) => {
+    // Giả sử có 7 cột như định nghĩa
+    return Array.from({ length: rowCount }).map((_, index) => (
+      <tr key={`skeleton-${index}`} className="skeleton-row">
+        <td className="skeleton-cell"><div className="skeleton-item short"></div></td>
+        <td className="skeleton-cell"><div className="skeleton-item"></div></td>
+        <td className="skeleton-cell"><div className="skeleton-item short"></div></td>
+        <td className="skeleton-cell"><div className="skeleton-item"></div></td> 
+        <td className="skeleton-cell"><div className="skeleton-item short"></div></td>
+        <td className="skeleton-cell"><div className="skeleton-item"></div></td> 
+        <td className="skeleton-cell"><div className="skeleton-item actions"></div></td>
+      </tr>
+    ))
   }
 
   return (
     <div className="room-list-container">
-      {/* Conditionally render the RoomForm */} 
-      {showForm ? (
-        <motion.div
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           exit={{ opacity: 0 }}
-           transition={{ duration: 0.3 }}
-        >
-           <RoomForm
-            room={currentRoom} // Pass the room data for editing, null for adding
+      {/* Header and Search/Add Button */} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="list-header-controls"
+      >
+        <div className="search-box">
+          <FaSearch />
+          <input
+            value={globalFilter || ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder={`Tìm kiếm trong ${rooms.length} phòng...`}
+          />
+        </div>
+        {canEdit && (
+          <button 
+             className="add-new-button" 
+             onClick={handleAddRoom} 
+             disabled={loading || isSubmitting} // Disable khi đang tải hoặc submit
+           >
+            <FaPlus /> Thêm phòng mới
+          </button>
+        )}
+      </motion.div>
+
+      {/* Room Form Modal */} 
+      {showForm && (
+        // Sử dụng class dùng chung cho overlay
+        <div className="form-modal-overlay"> 
+          <RoomForm
+            room={currentRoom}
             isEditMode={isEditMode}
-            onClose={() => setShowForm(false)} // Prop to close the form
-            onSuccess={handleFormSuccess} // Prop to handle successful submission
+            // Truyền handleSaveRoom vào prop onSave
+            onSave={handleSaveRoom} 
+            onClose={() => setShowForm(false)}
+            roomTypes={roomTypes}
+            // Truyền isSubmitting xuống cho form
+            isSubmitting={isSubmitting} 
           />
-        </motion.div>
-      ) : null}
+        </div>
+      )}
 
-      {/* Conditionally render the RoomTypeImageManager Modal */} 
-      {showImageManagerModal ? (
-          <RoomTypeImageManager
-            roomTypeId={selectedRoomTypeId}
-            roomTypeName={selectedRoomTypeName}
-            onClose={() => {
-                setShowImageManagerModal(false);
-                setSelectedRoomTypeId(null);
-                setSelectedRoomTypeName('');
-                // Optional: Refetch rooms if image changes might affect display (e.g., primary image)
-                // fetchRooms();
-            }}
-          />
-      ) : null}
+      {/* Delete Confirmation Modal */} 
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteRoom}
+        title="Xác nhận Xóa Phòng"
+        message={`Bạn có chắc chắn muốn xóa phòng "${roomToDelete?.roomNumber}"? Hành động này không thể hoàn tác.`}
+        confirmText="Đồng ý Xóa"
+      />
 
-      {/* Render the main list/table only when forms/modals are not shown */} 
-      {!showForm && !showImageManagerModal ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <div className="page-header">
-            <h1>Quản lý phòng</h1>
-            <button className="add-button" onClick={handleAddRoom}>
-              <FaPlus /> Thêm phòng mới
-            </button>
-          </div>
-
-          <div className="table-controls">
-            <div className="search-box">
-              <FaSearch />
-              <input
-                value={globalFilter || ""}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                placeholder={`Tìm kiếm trong ${rooms.length} phòng...`}
-              />
-            </div>
-            {/* Removed filter section */}
-          </div>
-
-          {/* Render the table */} 
-          <div className="table-responsive">
-             <table {...getTableProps()} className="room-table">
+      {/* Table Section */} 
+      {loadingError && !loading ? ( // Chỉ hiển thị lỗi khi không loading
+         <div className="loading-error-message">{loadingError}</div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="table-container"
+        >
+          <table {...getTableProps()} className="data-table">
               <thead>
                 {headerGroups.map(headerGroup => (
                   <tr {...headerGroup.getHeaderGroupProps()}>
@@ -289,80 +333,57 @@ const RoomList = () => {
                   </tr>
                 ))}
               </thead>
-              <tbody {...getTableBodyProps()}>
-                {page.map(row => {
-                  prepareRow(row)
-                  return (
-                    <tr {...row.getRowProps()}>
-                      {row.cells.map(cell => (
-                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                      ))}
-                    </tr>
-                  )
-                })}
-                {page.length === 0 && (
-                  <tr>
-                    <td colSpan={columns.length} className="no-data">
-                      Không tìm thấy phòng nào.
-                    </td>
+            <tbody {...getTableBodyProps()}>
+              {/* Hiển thị skeleton khi loading, bất kể form có mở hay không */} 
+              {loading ? renderSkeleton(pageSize) : page.map((row) => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map(cell => (
+                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                    ))}
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
 
-           {/* Pagination Controls */} 
-          {pageOptions.length > 1 && (
+          {/* Pagination - Chỉ hiển thị khi không loading */} 
+          {!loading && rooms.length > 0 && (
              <div className="pagination-controls">
-                <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-                  {'<<'}
-                </button>{' '}
-                <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-                  {'<'}
-                </button>{' '}
-                <span>
-                  Trang{' '}
-                  <strong>
-                    {pageIndex + 1} trên {pageOptions.length}
-                  </strong>{' '}
-                </span>
-                <button onClick={() => nextPage()} disabled={!canNextPage}>
-                  {'>'}
-                </button>{' '}
-                <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-                  {'>>'}
-                </button>{' '}
-                <span>
-                  | Tới trang:{' '}
-                  <input
-                    type="number"
-                    defaultValue={pageIndex + 1}
-                    onChange={e => {
-                      const pageNum = e.target.value ? Number(e.target.value) - 1 : 0;
-                      gotoPage(pageNum);
-                    }}
-                    style={{ width: '50px' }}
-                  />
-                </span>{' '}
-                <select
-                  value={pageSize}
-                  onChange={e => {
-                    setPageSize(Number(e.target.value));
-                  }}
-                >
-                  {[10, 20, 30, 40, 50].map(pageSize => (
-                    <option key={pageSize} value={pageSize}>
-                      Hiển thị {pageSize}
-                    </option>
-                  ))}
+               <div className="page-info"> {/* Thêm thông tin số lượng */} 
+                 Hiển thị {page.length} / {rooms.length} phòng
+               </div>
+               <div className="page-buttons"> {/* Nhóm các nút điều khiển trang */} 
+                  <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} title="Trang đầu">{"«"}</button>
+                  <button onClick={() => previousPage()} disabled={!canPreviousPage} title="Trang trước">{"‹"}</button>
+                  {/* Có thể thêm input nhảy trang ở đây nếu muốn */}
+                  <button onClick={() => nextPage()} disabled={!canNextPage} title="Trang sau">{"›"}</button>
+                  <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage} title="Trang cuối">{"»"}</button>
+               </div>
+                <select 
+                    value={pageSize} 
+                    onChange={e => setPageSize(Number(e.target.value))}
+                    title="Số hàng mỗi trang"
+                 >
+                    {[5, 10, 20, 30, 50].map(size => (
+                        <option key={size} value={size}> {size} / trang </option>
+                    ))}
                 </select>
-              </div>
+                <span className="page-info"> {/* Hiển thị trang hiện tại */} 
+                   Trang {pageIndex + 1}/{pageOptions.length}
+                 </span>
+             </div>
+          )}
+          {/* Message khi không có dữ liệu và không loading */} 
+          {!loading && rooms.length === 0 && !loadingError && (
+             <div className="no-data-message">Không tìm thấy phòng nào.</div>
           )}
         </motion.div>
-      ) : null}
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default RoomList
+export default RoomList;
 

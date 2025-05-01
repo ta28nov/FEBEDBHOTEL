@@ -1,5 +1,7 @@
 using HotelManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.SqlServer.Metadata.Internal; // Needed for SqlServerAnnotationNames
 
 namespace HotelManagement.Infrastructure.Data;
 
@@ -129,7 +131,7 @@ public class HotelDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
             entity.Property(e => e.PaymentStatus).HasMaxLength(20).IsRequired();
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
-            
+
             // Mối quan hệ với Customer
             entity.HasOne(e => e.Customer)
                 .WithMany(c => c.Bookings)
@@ -217,7 +219,7 @@ public class HotelDbContext : DbContext
             entity.Property(e => e.Quantity).HasDefaultValue(1);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)").IsRequired();
             entity.Property(e => e.ServiceDate).HasDefaultValueSql("GETDATE()");
-            
+
             // Mối quan hệ với Booking
             entity.HasOne(e => e.Booking)
                 .WithMany(b => b.BookingServices)

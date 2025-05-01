@@ -129,6 +129,40 @@ const roomService = {
      }
   },
 
+  // ADDED: Create Room Type
+  createRoomType: async (roomTypeData) => {
+    try {
+      // Calls POST /api/roomtypes
+      return await roomEndpoints.createRoomType(roomTypeData);
+    } catch (error) {
+      console.error("Lỗi tạo loại phòng:", error);
+      throw error;
+    }
+  },
+
+  // ADDED: Update Room Type
+  updateRoomType: async (id, roomTypeData) => {
+    try {
+      // Calls PUT /api/roomtypes/{id}
+      return await roomEndpoints.updateRoomType(id, roomTypeData);
+    } catch (error) {
+      console.error(`Lỗi cập nhật loại phòng ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // ADDED: Delete Room Type
+  deleteRoomType: async (id) => {
+    try {
+      // Calls DELETE /api/roomtypes/{id}
+      return await roomEndpoints.deleteRoomType(id);
+    } catch (error) {
+      console.error(`Lỗi xóa loại phòng ${id}:`, error);
+      // Important: Rethrow the error so the UI can check for 409 Conflict etc.
+      throw error;
+    }
+  },
+
   getRoomAmenities: async () => {
     try {
       // Calls GET /api/rooms/amenities
@@ -139,43 +173,60 @@ const roomService = {
     }
   },
 
-  // === Room Type Image Management ===
-
-  /**
-   * Uploads an image for a specific Room Type.
-   * @param {object} imageData - Object containing { roomTypeId, imageFile, isPrimary }
-   */
-  uploadRoomTypeImage: async ({ roomTypeId, imageFile, isPrimary }) => {
+  // === Room Type Image Management (using new endpoints) ===
+  getRoomTypeImages: async (roomTypeId) => {
     try {
-      const formData = new FormData()
-      formData.append("RoomTypeId", roomTypeId)
-      formData.append("Image", imageFile)
-      if (isPrimary !== undefined) {
-         formData.append("IsPrimary", isPrimary)
+      return await roomEndpoints.getRoomTypeImages(roomTypeId);
+    } catch (error) {
+      console.error(`Lỗi lấy hình ảnh cho loại phòng ${roomTypeId}:`, error);
+      throw error;
+    }
+  },
+
+  uploadRoomTypeImage: async (roomTypeId, file, isPrimary = false) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      // Only append isPrimary if it's explicitly true, as default is false
+      if (isPrimary === true) {
+        formData.append('isPrimary', 'true'); 
       }
-      // Calls POST /api/rooms/image
-      return await roomEndpoints.uploadRoomTypeImage(formData)
+      return await roomEndpoints.uploadRoomTypeImage(roomTypeId, formData);
     } catch (error) {
-      console.error(`Lỗi upload hình ảnh cho loại phòng ${roomTypeId}:`, error)
+      console.error(`Lỗi tải lên hình ảnh cho loại phòng ${roomTypeId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteRoomTypeImage: async (featureId) => {
+    try {
+      return await roomEndpoints.deleteRoomTypeImage(featureId);
+    } catch (error) {
+      console.error(`Lỗi xóa hình ảnh ${featureId}:`, error);
+      throw error;
+    }
+  },
+
+  setRoomTypeImagePrimary: async (featureId) => {
+    try {
+      return await roomEndpoints.setRoomTypeImagePrimary(featureId);
+    } catch (error) {
+      console.error(`Lỗi đặt ảnh ${featureId} làm ảnh chính:`, error);
+      throw error;
+    }
+  },
+
+  // === Amenity Management ===
+  getRoomAmenities: async () => {
+    try {
+      // Calls GET /api/rooms/amenities
+      return await roomEndpoints.getRoomAmenities()
+    } catch (error) {
+      console.error("Lỗi lấy tiện nghi phòng:", error)
       throw error
     }
   },
 
-  /**
-   * Deletes an image associated with a Room Type.
-   * @param {number|string} imageId - The ID of the image (feature) to delete.
-   * @param {number|string} [roomId='placeholder'] - Placeholder or context room ID (confirm necessity with backend). Defaults to 'placeholder'.
-   */
-   deleteRoomTypeImage: async (imageId, roomId = 'placeholder') => {
-    try {
-       // Calls DELETE /api/rooms/{roomId}/image/{imageId}
-       // The roomId might be required by the URL structure even if not used in backend logic.
-      return await roomEndpoints.deleteRoomTypeImage(roomId, imageId)
-    } catch (error) {
-      console.error(`Lỗi xóa hình ảnh ${imageId}:`, error)
-      throw error
-    }
-  },
 }
 
 export default roomService

@@ -16,7 +16,7 @@ const Footer = () => {
               stay.
             </p>
             <div className="social-links">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.facebook.com/seoonlyone/" target="_blank" rel="noopener noreferrer">
                 <FaFacebookF />
               </a>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
@@ -78,15 +78,15 @@ const Footer = () => {
             <ul className="contact-info">
               <li>
                 <FaMapMarkerAlt />
-                <span>123 Luxury Avenue, New York, NY 10001</span>
+                <span>Lac Hong University, Biên Hoà , Đồng Nai</span>
               </li>
               <li>
                 <FaPhone />
-                <span>+1 (555) 123-4567</span>
+                <span>0345543986</span>
               </li>
               <li>
                 <FaEnvelope />
-                <span>info@luxuryhotel.com</span>
+                <span>tiphong05@gmail.com</span>
               </li>
             </ul>
           </div>

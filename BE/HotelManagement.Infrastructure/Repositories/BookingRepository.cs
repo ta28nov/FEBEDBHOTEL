@@ -167,24 +167,55 @@ public class BookingRepository : IBookingRepository
     }
 
     /// <summary>
-    /// Thêm dịch vụ cho đặt phòng
+    /// Thêm dịch vụ cho đặt phòng và cập nhật tổng tiền
     /// </summary>
     public async Task AddBookingServiceAsync(BookingService service)
     {
+        var booking = await _context.Bookings.FindAsync(service.BookingId);
+        if (booking == null)
+        {
+            // Hoặc ném ngoại lệ phù hợp hơn
+            throw new KeyNotFoundException($"Booking with ID {service.BookingId} not found.");
+        }
+
+        // Cập nhật tổng tiền của Booking
+        booking.TotalAmount += service.Price * service.Quantity;
+        _context.Bookings.Update(booking); // Đánh dấu Booking là đã thay đổi
+
+        // Thêm BookingService mới
         _context.BookingServices.Add(service);
+
+        // Lưu cả hai thay đổi trong một transaction
         await _context.SaveChangesAsync();
     }
 
     /// <summary>
-    /// Xóa dịch vụ của đặt phòng
+    /// Xóa dịch vụ của đặt phòng và cập nhật tổng tiền
     /// </summary>
-    public async Task RemoveBookingServiceAsync(int serviceId)
+    public async Task RemoveBookingServiceAsync(int bookingServiceId) // Sửa tên tham số cho rõ ràng
     {
-        var service = await _context.BookingServices.FindAsync(serviceId);
-        if (service != null)
+        // Tìm BookingService cần xóa, đồng thời Include Booking liên quan
+        var serviceToRemove = await _context.BookingServices
+                                      .Include(bs => bs.Booking) // Nạp Booking kèm theo
+                                      .FirstOrDefaultAsync(bs => bs.Id == bookingServiceId);
+
+        if (serviceToRemove != null && serviceToRemove.Booking != null)
         {
-            _context.BookingServices.Remove(service);
+            // Cập nhật tổng tiền của Booking
+            serviceToRemove.Booking.TotalAmount -= serviceToRemove.Price * serviceToRemove.Quantity;
+            _context.Bookings.Update(serviceToRemove.Booking); // Đánh dấu Booking là đã thay đổi
+
+            // Xóa BookingService
+            _context.BookingServices.Remove(serviceToRemove);
+
+            // Lưu cả hai thay đổi trong một transaction
             await _context.SaveChangesAsync();
         }
+        else if (serviceToRemove != null && serviceToRemove.Booking == null)
+        {
+             // Log hoặc xử lý trường hợp Booking liên kết bị null (khó xảy ra nếu FK được thiết lập đúng)
+             throw new InvalidOperationException($"Booking associated with BookingService ID {bookingServiceId} is null.");
+        }
+        // Nếu serviceToRemove là null, không làm gì cả hoặc log/ném lỗi
     }
 }

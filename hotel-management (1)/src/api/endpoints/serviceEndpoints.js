@@ -22,6 +22,7 @@ const serviceEndpoints = {
 
   // Danh mục dịch vụ
   getServiceCategories: () => apiClient.get("/services/categories"),
+  createCategory: (categoryData) => apiClient.post("/services/categories", categoryData),
 
   // Upload hình ảnh dịch vụ
   uploadServiceImage: (serviceId, formData) => {

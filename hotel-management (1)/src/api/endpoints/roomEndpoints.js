@@ -21,21 +21,20 @@ const roomEndpoints = {
   // Loại phòng (Moved from /rooms/types)
   getRoomTypes: () => apiClient.get("/roomtypes"),
   getRoomTypeById: (id) => apiClient.get(`/roomtypes/${id}`),
+  createRoomType: (roomTypeData) => apiClient.post("/roomtypes", roomTypeData),
+  updateRoomType: (id, roomTypeData) => apiClient.put(`/roomtypes/${id}`, roomTypeData),
+  deleteRoomType: (id) => apiClient.delete(`/roomtypes/${id}`),
+
+  // === Room Type Image Management (using /api/Images/RoomType/) ===
+  getRoomTypeImages: (roomTypeId) => apiClient.get(`/Images/RoomType/${roomTypeId}`),
+  uploadRoomTypeImage: (roomTypeId, formData) => apiClient.post(`/Images/RoomType/${roomTypeId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  deleteRoomTypeImage: (featureId) => apiClient.delete(`/Images/RoomType/${featureId}`),
+  setRoomTypeImagePrimary: (featureId) => apiClient.put(`/Images/RoomType/${featureId}/SetPrimary`),
 
   // Tiện nghi phòng (Path is correct per spec)
   getRoomAmenities: () => apiClient.get("/rooms/amenities"),
-
-  // Tải lên hình ảnh (Cho Loại Phòng, path updated, roomId removed from path)
-  uploadRoomTypeImage: (formData) => {
-    return apiClient.post(`/rooms/image`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-  },
-
-  // Xóa hình ảnh (Của Loại Phòng)
-  deleteRoomTypeImage: (roomId, imageId) => apiClient.delete(`/rooms/${roomId}/image/${imageId}`),
 }
 
 export default roomEndpoints

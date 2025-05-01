@@ -28,8 +28,8 @@ const bookingEndpoints = {
   getMyBookings: () => apiClient.get("/bookings/my-bookings"),
 
   // Liên quan đến thanh toán
-  updatePaymentStatus: (id, paymentStatus) =>
-    apiClient.patch(`/bookings/${id}/payment`, { payment_status: paymentStatus }),
+  updatePaymentStatus: (id, paymentData) =>
+    apiClient.put(`/bookings/${id}/payment`, paymentData),
   processPayment: (bookingId, paymentData) => apiClient.post(`/bookings/${bookingId}/payment`, paymentData),
 
   // Dịch vụ cho đặt phòng

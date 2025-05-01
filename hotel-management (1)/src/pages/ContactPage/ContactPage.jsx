@@ -121,9 +121,9 @@ const ContactPage = () => {
                 <FaMapMarkerAlt />
               </div>
               <h3>Address</h3>
-              <p>123 Luxury Avenue</p>
-              <p>New York, NY 10001</p>
-              <p>United States</p>
+              <p>Lac Hong University</p>
+              <p>Biên Hoà , Đồng Nai</p>
+              <p>Viet Nam</p>
             </motion.div>
 
             <motion.div
@@ -137,9 +137,9 @@ const ContactPage = () => {
                 <FaPhone />
               </div>
               <h3>Phone</h3>
-              <p>Reservations: +1 (555) 123-4567</p>
-              <p>Front Desk: +1 (555) 123-4568</p>
-              <p>Customer Service: +1 (555) 123-4569</p>
+              <p>Reservations: 0345543986</p>
+              <p>Front Desk: 0345543986</p>
+              <p>Customer Service: 0345543986</p>
             </motion.div>
 
             <motion.div
@@ -153,7 +153,7 @@ const ContactPage = () => {
                 <FaEnvelope />
               </div>
               <h3>Email</h3>
-              <p>info@luxuryhotel.com</p>
+              <p>tiphong05@gmail.com</p>
               <p>reservations@luxuryhotel.com</p>
               <p>support@luxuryhotel.com</p>
             </motion.div>
@@ -170,7 +170,7 @@ const ContactPage = () => {
               </div>
               <h3>Hours</h3>
               <p>Check-in: 3:00 PM</p>
-              <p>Check-out: 12:00 PM</p>
+              <p>Check-out: 12:00 AM</p>
               <p>Front Desk: 24/7</p>
             </motion.div>
           </div>
@@ -275,8 +275,7 @@ const ContactPage = () => {
               transition={{ duration: 0.8 }}
             >
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215256349542!2d-73.98784532396766!3d40.75798
-833440644!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25855c6480299%3A0x55194ec5a1ae072e!2sTimes%20Square!5e0!3m2!1sen!2sus!4v1690214105025!5m2!1sen!2sus"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3917.1237709281913!2d106.80239365465339!3d10.95402209853728!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174d95970202f3f%3A0x679e7fa6d33f74e5!2zVHLGsOG7nW5nIMSR4bqhaSBo4buNYyBM4bqhYyBI4buTbmc!5e0!3m2!1svi!2s!4v1746089072043!5m2!1svi!2s"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

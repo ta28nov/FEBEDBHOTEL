@@ -171,8 +171,8 @@ const RegisterPage = () => {
             transition={{ duration: 0.5 }}
           >
             <div className="register-form-content">
-              <h1>Tạo tài khoản mới</h1>
-              <p>Tham gia cộng đồng của chúng tôi để truy cập các quyền lợi độc quyền và quản lý đặt phòng của bạn.</p>
+              <h1>Register New Account</h1>
+              <p>Join our community to access exclusive benefits and manage your bookings.</p>
 
               <form onSubmit={handleRegister} className="register-form">
                 {/* Họ và tên */}
@@ -319,7 +319,7 @@ const RegisterPage = () => {
               {/* Link đăng nhập */}
               <div className="login-link">
                 <p>
-                  Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+                  Đã có tài khoản? <Link to="/login">Login</Link>
                 </p>
               </div>
             </div>

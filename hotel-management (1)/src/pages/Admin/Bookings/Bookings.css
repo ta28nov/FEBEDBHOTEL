@@ -324,3 +324,133 @@
   }
 }
 
+/* --- Modal Styles --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 600px; /* Giới hạn chiều rộng tối đa */
+  max-height: 90vh; /* Giới hạn chiều cao tối đa */
+  overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
+  position: relative; /* Để định vị nút đóng nếu cần */
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Khoảng cách giữa các nhóm form */
+}
+
+/* Tái sử dụng hoặc định nghĩa .form-group nếu chưa có */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px; 
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+/* Có thể tái sử dụng button styles hoặc định nghĩa riêng */
+.form-actions .save-button,
+.form-actions .cancel-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+.form-actions .save-button {
+  background-color: #28a745; /* Màu xanh lá */
+  color: white;
+}
+
+.form-actions .save-button:hover {
+  background-color: #218838;
+}
+
+.form-actions .save-button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.form-actions .cancel-button {
+  background-color: #f8f9fa; /* Màu xám nhạt */
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.form-actions .cancel-button:hover {
+  background-color: #e2e6ea;
+}
+
+.form-actions .cancel-button:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* --- End Modal Styles --- */
+

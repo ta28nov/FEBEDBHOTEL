@@ -11,6 +11,13 @@ public class MappingProfile : Profile
         // User mappings
         CreateMap<User, UserDto>();
         
+        // Customer mappings (NEW)
+        CreateMap<Customer, CustomerDto>()
+            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null));
+        CreateMap<CreateCustomerRequest, Customer>(); // Map request to entity for creation
+        CreateMap<UpdateCustomerRequest, Customer>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null)); // Ignore nulls during update mapping
+        
         // Room mappings
         CreateMap<Room, RoomDto>()
             .ForMember(dest => dest.RoomTypeName, opt => opt.MapFrom(src => src.RoomType!.Name))

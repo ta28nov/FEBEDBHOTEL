@@ -1425,3 +1425,11 @@ GO
 
 PRINT 'Thấy dòng này là SQL OK rồi =)) '
 GO
+
+-- Vô hiệu hóa trigger TR_Bookings_UpdateRoomStatus
+ALTER TABLE Bookings DISABLE TRIGGER TR_Bookings_UpdateRoomStatus;
+GO
+
+-- Vô hiệu hóa trigger TR_BookingServices_UpdateTotalAmount
+ALTER TABLE BookingServices DISABLE TRIGGER TR_BookingServices_UpdateTotalAmount;
+GO

@@ -13,242 +13,170 @@
  * Quyền truy cập: Admin và Employee
  */
 
-import { useState, useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { yupResolver } from "@hookform/resolvers/yup"
-import * as yup from "yup"
-import { FaTimes } from "react-icons/fa"
-import { motion } from "framer-motion"
-import { toast } from "react-toastify"
-import roomService from "../../../services/roomService" // Corrected service
-// ROOM_STATUS might still be useful for the Status dropdown
-import { ROOM_STATUS } from "../../../config/constants"
-import "./RoomForm.css"
+import React, { useState, useEffect } from 'react';
+import { FaSpinner, FaTimes } from 'react-icons/fa';
 
-// Validation schema based on API spec
-const schema = yup.object().shape({
-  roomNumber: yup.string().required("Số phòng là bắt buộc"),
-  // Validate roomTypeId as a number required for selection
-  roomTypeId: yup.number().required("Loại phòng là bắt buộc").positive("Loại phòng không hợp lệ").integer(),
-  status: yup.string().required("Trạng thái là bắt buộc"),
-  floor: yup.number()
-    .required("Số tầng là bắt buộc")
-    .integer("Số tầng phải là số nguyên"),
-    // No validation for price, capacity, beds, description, amenities here as they are not submitted directly
-})
+// Giả sử ROOM_STATUS lấy từ constants hoặc API
+const ROOM_STATUS_OPTIONS = {
+    AVAILABLE: 'available',
+    OCCUPIED: 'occupied',
+    CLEANING: 'cleaning',
+    MAINTENANCE: 'maintenance',
+};
 
-// Accepted props: room (for edit mode), isEditMode, onClose, onSuccess
-const RoomForm = ({ room, isEditMode, onClose, onSuccess }) => {
-  const [roomTypes, setRoomTypes] = useState([])
-  const [loadingRoomTypes, setLoadingRoomTypes] = useState(false)
-  const [formError, setFormError] = useState(null) // For general form errors
-  const [isSubmitting, setIsSubmitting] = useState(false)
+const RoomForm = ({ room, isEditMode, onClose, onSave, roomTypes = [], isSubmitting }) => {
+  const [formData, setFormData] = useState({
+    roomNumber: '',
+    roomTypeId: '',
+    floor: '',
+    status: ROOM_STATUS_OPTIONS.AVAILABLE, // Mặc định
+  });
+  const [errors, setErrors] = useState({});
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    control, // Need Controller for the Select component
-    formState: { errors },
-    reset,
-  } = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      roomNumber: "",
-      roomTypeId: null, // Default to null or empty string
-      status: "Available", // Default status from spec
-      floor: 1,
-    },
-  })
-
-  // Fetch room types for the dropdown
-  useEffect(() => {
-    const fetchRoomTypes = async () => {
-      setLoadingRoomTypes(true)
-      try {
-        const response = await roomService.getRoomTypes() // Calls GET /api/roomtypes
-        setRoomTypes(response.data || [])
-      } catch (error) {
-        toast.error("Không thể tải danh sách loại phòng.")
-        console.error("Fetch room types error:", error)
-      } finally {
-        setLoadingRoomTypes(false)
-      }
-    }
-    fetchRoomTypes()
-  }, [])
-
-  // Populate form if in edit mode
   useEffect(() => {
     if (isEditMode && room) {
-      // Set values based on the fields required by the form/API
-      reset({
-          roomNumber: room.roomNumber || "",
-          roomTypeId: room.roomTypeId || null,
-          status: room.status || "Available",
-          floor: room.floor || 1,
+      setFormData({
+        roomNumber: room.roomNumber || '',
+        roomTypeId: room.roomTypeId || '',
+        floor: room.floor || '',
+        status: room.status || ROOM_STATUS_OPTIONS.AVAILABLE,
       });
+      setErrors({});
     } else {
-       // Reset form for add mode
-       reset({
-          roomNumber: "",
-          roomTypeId: null,
-          status: "Available",
-          floor: 1,
-       });
+      // Reset form for adding
+      setFormData({
+        roomNumber: '',
+        roomTypeId: '', // Để trống ban đầu
+        floor: 1, // Mặc định tầng 1?
+        status: ROOM_STATUS_OPTIONS.AVAILABLE,
+      });
+      setErrors({});
     }
-  }, [isEditMode, room, reset])
+  }, [room, isEditMode]);
 
-  // Handle form submission
-  const onFormSubmit = async (data) => {
-    setIsSubmitting(true)
-    setFormError(null)
-    const payload = {
-        roomNumber: data.roomNumber,
-        roomTypeId: data.roomTypeId,
-        status: data.status,
-        floor: data.floor,
+  const handleChange = (e) => {
+    const { name, value, type } = e.target;
+    const val = type === 'number' ? parseInt(value, 10) || '' : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.roomNumber) newErrors.roomNumber = 'Số phòng là bắt buộc.';
+    if (!formData.roomTypeId) newErrors.roomTypeId = 'Loại phòng là bắt buộc.';
+    if (formData.floor === '' || isNaN(formData.floor) || formData.floor < 0) newErrors.floor = 'Tầng không hợp lệ.';
+    if (!formData.status) newErrors.status = 'Trạng thái là bắt buộc.';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isSubmitting || !validateForm()) return;
+
+    const dataToSave = {
+        ...formData,
+        floor: parseInt(formData.floor, 10),
+        roomTypeId: parseInt(formData.roomTypeId, 10),
     };
 
-    try {
-      if (isEditMode) {
-        // Update existing room - send only changed fields? API allows partial update.
-        // For simplicity, sending all fields for now. Adjust if partial update is strictly needed.
-        await roomService.updateRoom(room.id, payload) // Calls PUT /api/rooms/{id}
-        toast.success("Cập nhật phòng thành công")
-      } else {
-        // Create new room
-        await roomService.createRoom(payload) // Calls POST /api/rooms
-        toast.success("Thêm phòng mới thành công")
-      }
-      onSuccess() // Call the success callback passed from RoomList
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || (isEditMode ? "Không thể cập nhật phòng" : "Không thể thêm phòng mới")
-      setFormError(errorMsg) // Show error message near the submit button
-      toast.error(errorMsg)
-      console.error("Submit room error:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+    onSave(dataToSave, isEditMode ? room.id : null);
+  };
 
   return (
-    <div className="room-form-overlay">
-      <motion.div
-        className="room-form-container"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.2 }}
-      >
-        <div className="form-header">
-          <h2>{isEditMode ? "Chỉnh sửa phòng" : "Thêm phòng mới"}</h2>
-          <button type="button" className="close-button" onClick={onClose} disabled={isSubmitting}>
-            <FaTimes />
-          </button>
+    // Modal structure - nên đặt ở RoomList.jsx để quản lý overlay
+    <div className="room-form-modal-content"> 
+      <div className="modal-header">
+        <h2>{isEditMode ? 'Chỉnh sửa Phòng' : 'Thêm phòng mới'}</h2>
+        <button onClick={onClose} className="close-button" title="Đóng"><FaTimes /></button>
         </div>
-
-        <form onSubmit={handleSubmit(onFormSubmit)} className="room-form">
-          {/* Room Number */} 
+      <form onSubmit={handleSubmit} className="room-form-container">
           <div className="form-group">
             <label htmlFor="roomNumber">Số phòng</label>
             <input
               type="text"
               id="roomNumber"
-              {...register("roomNumber")}
-              className={errors.roomNumber ? "input-error" : ""}
+            name="roomNumber"
+            value={formData.roomNumber}
+            onChange={handleChange}
               disabled={isSubmitting}
+            className={errors.roomNumber ? 'input-error' : ''}
             />
-            {errors.roomNumber && <span className="error-message">{errors.roomNumber.message}</span>}
+          {errors.roomNumber && <span className="error-message">{errors.roomNumber}</span>}
           </div>
 
-          {/* Room Type Dropdown */} 
           <div className="form-group">
             <label htmlFor="roomTypeId">Loại phòng</label>
-            <Controller
-                name="roomTypeId"
-                control={control}
-                render={({ field }) => (
                     <select
                         id="roomTypeId"
-                        {...field}
-                        className={errors.roomTypeId ? "input-error" : ""}
-                        disabled={loadingRoomTypes || isSubmitting}
+            name="roomTypeId"
+            value={formData.roomTypeId}
+            onChange={handleChange}
+            disabled={isSubmitting || roomTypes.length === 0}
+            className={errors.roomTypeId ? 'input-error' : ''}
                     >
-                        <option value="">{loadingRoomTypes ? "Đang tải..." : "-- Chọn loại phòng --"}</option>
-                        {roomTypes.map((type) => (
-                            // Assuming room type object has 'id' and 'name'
-                            <option key={type.id} value={type.id}>
-                                {type.name || `Loại ${type.id}`} {/* Display name, fallback to ID */}
-                            </option>
+            <option value="" disabled>-- Chọn loại phòng --</option>
+            {roomTypes.map(type => (
+              // Giả sử roomType có id và name
+              <option key={type.id} value={type.id}>{type.name}</option>
                         ))}
                     </select>
-                )}
-            />
-            {errors.roomTypeId && <span className="error-message">{errors.roomTypeId.message}</span>}
+          {errors.roomTypeId && <span className="error-message">{errors.roomTypeId}</span>}
+          {roomTypes.length === 0 && !isSubmitting && <span className="info-message">Đang tải loại phòng...</span>}
           </div>
 
-          {/* Floor */} 
           <div className="form-group">
             <label htmlFor="floor">Tầng</label>
             <input
               type="number"
               id="floor"
-              {...register("floor")}
-              className={errors.floor ? "input-error" : ""}
+            name="floor"
+            value={formData.floor}
+            onChange={handleChange}
               disabled={isSubmitting}
+            min="0"
+            className={errors.floor ? 'input-error' : ''}
             />
-            {errors.floor && <span className="error-message">{errors.floor.message}</span>}
+          {errors.floor && <span className="error-message">{errors.floor}</span>}
           </div>
 
-          {/* Status Dropdown */} 
           <div className="form-group">
             <label htmlFor="status">Trạng thái</label>
-             <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
                    <select
                     id="status"
-                    {...field}
-                    className={errors.status ? "input-error" : ""}
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
                     disabled={isSubmitting}
-                  >
-                    {/* Use ROOM_STATUS from constants or define statuses directly */}
-                    {/* Example statuses based on spec examples */} 
-                    <option value="Available">Có sẵn (Available)</option>
-                    <option value="Occupied">Đang có khách (Occupied)</option>
-                    <option value="Maintenance">Bảo trì (Maintenance)</option>
-                    <option value="Cleaning">Đang dọn dẹp (Cleaning)</option>
-                    {/* Add other relevant statuses if needed */}
+            className={errors.status ? 'input-error' : ''}
+          >
+             {/* Render options từ ROOM_STATUS_OPTIONS */}
+            <option value={ROOM_STATUS_OPTIONS.AVAILABLE}>Có sẵn (Available)</option>
+            <option value={ROOM_STATUS_OPTIONS.OCCUPIED}>Có khách (Occupied)</option>
+            <option value={ROOM_STATUS_OPTIONS.CLEANING}>Đang dọn (Cleaning)</option>
+            <option value={ROOM_STATUS_OPTIONS.MAINTENANCE}>Bảo trì (Maintenance)</option>
                   </select>
-                )}
-              />
-            {errors.status && <span className="error-message">{errors.status.message}</span>}
+          {errors.status && <span className="error-message">{errors.status}</span>}
           </div>
-
-          {/* Remove fields not in the API spec for create/update: */} 
-          {/* beds, capacity, price, description, amenities */}
-
-          {formError && (
-            <div className="form-group form-error-message">
-                 {formError}
-            </div>
-           )}
 
           <div className="form-actions">
             <button type="button" className="cancel-button" onClick={onClose} disabled={isSubmitting}>
               Hủy
             </button>
-            <button type="submit" className="submit-button" disabled={isSubmitting}>
-              {isSubmitting ? "Đang xử lý..." : (isEditMode ? "Cập nhật" : "Thêm mới")}
+           <button type="submit" className="save-button" disabled={isSubmitting || roomTypes.length === 0}>
+            {isSubmitting ? (
+              <><FaSpinner className="spinner" /> Đang lưu...</>
+            ) : (isEditMode ? 'Lưu thay đổi' : 'Thêm mới')}
             </button>
           </div>
         </form>
-      </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default RoomForm
+export default RoomForm;
 

@@ -1,199 +1,256 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react';
-import { FaTimes, FaTrash, FaUpload, FaImage } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion';
-import roomService from '../../../services/roomService';
-import './RoomTypeImageManager.css'; // Create this CSS file
+import { useState, useEffect, useRef } from "react"
+import PropTypes from "prop-types"
+import { toast } from "react-toastify"
+import { FaUpload, FaTrash, FaStar, FaTimes } from "react-icons/fa"
+import { motion, AnimatePresence } from "framer-motion"
+import roomService from "../../../services/roomService"
+import ConfirmationModal from "../../common/ConfirmationModal"
+import Spinner from "../../common/Spinner" // Assuming Spinner component exists
+import "./RoomTypeImageManager.css"
 
 const RoomTypeImageManager = ({ roomTypeId, roomTypeName, onClose }) => {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isPrimary, setIsPrimary] = useState(false);
+  const [images, setImages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState(null) // ID of image being deleted
+  const [settingPrimaryId, setSettingPrimaryId] = useState(null) // ID of image being set as primary
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [imageToDelete, setImageToDelete] = useState(null)
+  const fileInputRef = useRef(null)
+  const isFetchingRef = useRef(false); // Ref to track if fetching is in progress
 
-  const fetchImages = useCallback(async () => {
-    if (!roomTypeId) return;
-    setLoading(true);
-    setError(null);
+  // Use import.meta.env for Vite environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5093"; // Get base URL for images
+
+  // Fetch images - Updated with ref check
+  const fetchImages = async () => {
+    // Prevent fetching if no ID or already fetching
+    if (!roomTypeId || isFetchingRef.current) return
+
+    isFetchingRef.current = true; // Mark as fetching
+    setLoading(true)
+    setError(null)
     try {
-      const response = await roomService.getRoomTypeById(roomTypeId);
-      // Assuming the response data has an 'images' array
-      setImages(response.data?.images || []);
+      const response = await roomService.getRoomTypeImages(roomTypeId)
+      // Check response structure before setting images
+      setImages(Array.isArray(response?.data) ? response.data : [])
     } catch (err) {
-      console.error("Error fetching room type images:", err);
-      setError("Không thể tải danh sách ảnh.");
-      toast.error("Không thể tải danh sách ảnh.");
-      setImages([]);
+      console.error("Error fetching images:", err)
+      setError("Không thể tải danh sách hình ảnh.")
+      // toast.error("Lỗi tải danh sách hình ảnh."); // Avoid duplicate toast if error is set
     } finally {
-      setLoading(false);
+      setLoading(false)
+      isFetchingRef.current = false; // Mark fetch as complete
     }
-  }, [roomTypeId]);
+  }
 
   useEffect(() => {
-    fetchImages();
-  }, [fetchImages]);
+    fetchImages()
+    // Optional: Add cleanup function if needed, though ref check might suffice
+    // return () => { isFetchingRef.current = false; } // Example cleanup
+  }, [roomTypeId])
 
+  // Handle file selection
   const handleFileChange = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-      setIsPrimary(false);
+    const file = event.target.files[0]
+    if (file) {
+      handleUpload(file)
     }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile || !roomTypeId) {
-      toast.warn("Vui lòng chọn một file ảnh.");
-      return;
+    // Reset file input value so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
+  }
 
-    setIsUploading(true);
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  // Handle image upload
+  const handleUpload = async (file) => {
+    setUploading(true)
+    setError(null)
     try {
-      await roomService.uploadRoomTypeImage({
-        roomTypeId: roomTypeId,
-        imageFile: selectedFile,
-        isPrimary: isPrimary
-      });
-      toast.success('Tải ảnh lên thành công!');
-      setSelectedFile(null);
-      setIsPrimary(false);
-      document.getElementById('imageUpload').value = null;
-      fetchImages();
-    } catch (uploadError) {
-      console.error("Error uploading image:", uploadError);
-
-      // --- Log chi tiết lỗi từ backend --- 
-      console.error("Backend Error Response:", uploadError.response?.data);
-      // ---------------------------------
-
-      // Cố gắng lấy message lỗi cụ thể hơn từ backend nếu có
-      let errorMsg = "Lỗi tải ảnh lên."; // Default message
-      if (uploadError.response?.data) {
-          if (typeof uploadError.response.data === 'string') {
-              errorMsg = uploadError.response.data;
-          } else if (uploadError.response.data.message) {
-              errorMsg = uploadError.response.data.message;
-          } else if (uploadError.response.data.title) { // ASP.NET Core validation problem details
-              errorMsg = uploadError.response.data.title;
-          } else if (uploadError.response.data.errors) { // Handle validation errors object
-             try {
-                 const firstErrorKey = Object.keys(uploadError.response.data.errors)[0];
-                 errorMsg = uploadError.response.data.errors[firstErrorKey][0];
-             } catch { /* Fallback to default if structure is unexpected */ }
-          }
-      }
-
-      toast.error(errorMsg);
+      // Check if it should be primary (only if no images exist yet)
+      const shouldBePrimary = images.length === 0;
+      const response = await roomService.uploadRoomTypeImage(roomTypeId, file, shouldBePrimary);
+      toast.success(response?.data?.message || "Tải lên hình ảnh thành công!")
+      await fetchImages() // Refresh the list
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Tải lên hình ảnh thất bại."
+      console.error("Error uploading image:", err)
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
-      setIsUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
-  const handleDelete = async (imageId) => {
-    if (window.confirm("Bạn có chắc muốn xóa ảnh này?")) {
-      try {
-        // Pass a placeholder for roomId as the service expects it based on URL structure,
-        // even if backend logic might ignore it.
-        await roomService.deleteRoomTypeImage(imageId, 'placeholder');
-        toast.success('Xóa ảnh thành công!');
-        fetchImages(); // Refresh image list
-      } catch (deleteError) {
-        console.error("Error deleting image:", deleteError);
-        toast.error(deleteError.response?.data?.message || "Lỗi xóa ảnh.");
-      }
+  // Show delete confirmation
+  const handleDeleteClick = (image) => {
+    setImageToDelete(image)
+    setShowDeleteConfirm(true)
+  }
+
+  // Confirm and delete image
+  const confirmDelete = async () => {
+    if (!imageToDelete) return
+    setDeletingId(imageToDelete.id)
+    setError(null)
+    setShowDeleteConfirm(false)
+    try {
+      await roomService.deleteRoomTypeImage(imageToDelete.id)
+      toast.success("Xóa hình ảnh thành công!")
+      await fetchImages() // Refresh list
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Xóa hình ảnh thất bại."
+      console.error("Error deleting image:", err)
+      setError(errorMsg)
+      toast.error(errorMsg)
+    } finally {
+      setDeletingId(null)
+      setImageToDelete(null)
     }
-  };
+  }
+
+  // Handle setting primary image
+  const handleSetPrimary = async (imageId) => {
+    setSettingPrimaryId(imageId)
+    setError(null)
+    try {
+      await roomService.setRoomTypeImagePrimary(imageId)
+      toast.success("Đặt ảnh chính thành công!")
+      await fetchImages() // Refresh list to show new primary
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Đặt ảnh chính thất bại."
+      console.error("Error setting primary image:", err)
+      setError(errorMsg)
+      toast.error(errorMsg)
+    } finally {
+      setSettingPrimaryId(null)
+    }
+  }
+
+  // Function to construct full image URL - Updated based on backend feedback
+  const getImageUrl = (relativePath) => {
+    if (!relativePath) return '' // Handle cases where path might be missing
+
+    // 1. Get the base API URL (e.g., http://localhost:5225/api)
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5093"; 
+    
+    // 2. Derive the server base URL by removing '/api' (or potential trailing slash)
+    // This assumes '/api' is the standard path prefix. Adjust if needed.
+    const serverBaseUrl = apiBaseUrl.replace(/\/api\/?$/, ''); // Remove /api or /api/
+
+    // 3. Ensure the relative path starts with a slash
+    const imagePath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+
+    // 4. Combine server base URL and image path
+    return `${serverBaseUrl}${imagePath}`;
+  }
 
   return (
-    <div className="image-manager-overlay">
-      <motion.div
-        className="image-manager-container"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -50 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="image-manager-header">
-          <h3>Quản lý ảnh cho: {roomTypeName || `Loại phòng ${roomTypeId}`}</h3>
-          <button onClick={onClose} className="close-button" title="Đóng">
-            <FaTimes />
-          </button>
-        </div>
+    <div className="image-manager-modal-content">
+      <div className="modal-header">
+        <h2>Quản lý Ảnh: {roomTypeName || `Loại phòng #${roomTypeId}`}</h2>
+        <button onClick={onClose} className="close-button" aria-label="Đóng"><FaTimes /></button>
+      </div>
 
-        <div className="image-manager-content">
-          {/* Upload Section */} 
-          <div className="upload-section">
-            <h4>Tải ảnh mới</h4>
-            <div className="upload-controls">
-                <label htmlFor="imageUpload" className="upload-label">
-                    <FaImage /> {selectedFile ? selectedFile.name : 'Chọn file ảnh'}
-                    <input
-                        type="file"
-                        id="imageUpload"
-                        accept="image/png, image/jpeg, image/gif, image/webp"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }} // Hide default input
-                    />
-                </label>
-                 <button
-                    onClick={handleUpload}
-                    disabled={!selectedFile || isUploading}
-                    className="upload-button"
-                 >
-                   {isUploading ? 'Đang tải...' : <><FaUpload /> Tải lên</>}
-                 </button>
-            </div>
-            <div className="is-primary-control">
-                <input
-                    type="checkbox"
-                    id="isPrimaryCheckbox"
-                    checked={isPrimary}
-                    onChange={(e) => setIsPrimary(e.target.checked)}
-                    disabled={!selectedFile || isUploading}
-                />
-                <label htmlFor="isPrimaryCheckbox">Đặt làm ảnh chính</label>
-             </div>
-          </div>
+      <div className="image-manager-body">
+        {error && <p className="error-message image-manager-error">{error}</p>}
 
-          {/* Image List Section */} 
-          <h4>Ảnh hiện có</h4>
-          {loading && <p>Đang tải ảnh...</p>}
-          {error && <p className="error-message">{error}</p>}
-          {!loading && !error && (
-            <div className="image-list">
-              {images.length === 0 ? (
-                <p>Không có ảnh nào cho loại phòng này.</p>
-              ) : (
-                images.map((img) => (
-                  <div key={img.id || img.url} className="image-item">
-                    <img
-                        // Prepend base URL if necessary, assuming URL is relative
-                        src={import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}${img.url}` : img.url}
-                        alt={`Ảnh ${img.id}`}
-                        onError={(e) => { e.target.src = '/images/placeholder.png'; }} // Fallback image
-                    />
+        <div className="image-grid">
+          {loading ? (
+            <Spinner />
+          ) : (
+            <AnimatePresence>
+              {images.map((image) => (
+                <motion.div
+                  key={image.id}
+                  className="image-card"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  layout
+                >
+                  <img src={getImageUrl(image.value)} alt={`Ảnh loại phòng ${roomTypeId}`} className="image-thumbnail" />
+                  {image.isPrimary && <FaStar className="primary-icon" title="Ảnh chính" />}
+                  <div className="image-actions">
+                    {!image.isPrimary && (
+                      <button
+                        onClick={() => handleSetPrimary(image.id)}
+                        disabled={settingPrimaryId === image.id || deletingId}
+                        className="action-button primary-button"
+                        title="Đặt làm ảnh chính"
+                      >
+                        {settingPrimaryId === image.id ? <Spinner size="sm" /> : <FaStar />}
+                      </button>
+                    )}
                     <button
-                      className="delete-image-button"
-                      onClick={() => handleDelete(img.id)}
+                      onClick={() => handleDeleteClick(image)}
+                      disabled={deletingId === image.id || settingPrimaryId}
+                      className="action-button delete-button"
                       title="Xóa ảnh"
                     >
-                      <FaTrash />
+                       {deletingId === image.id ? <Spinner size="sm" /> : <FaTrash />}
                     </button>
-                    {/* Optional: Display isPrimary status */}
-                    {img.isPrimary && <span className="primary-badge">Chính</span>}
                   </div>
-                ))
-              )}
-            </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
+
+          {/* Upload Button/Area */} 
+          {!loading && (
+             <button 
+                className="upload-area" 
+                onClick={triggerFileInput} 
+                disabled={uploading}
+             >
+                {uploading ? (
+                   <Spinner />
+                ) : (
+                   <>
+                     <FaUpload />
+                     <span>Tải ảnh lên</span>
+                   </>
+                 )}
+             </button>
           )}
         </div>
 
-      </motion.div>
-    </div>
-  );
-};
+        {/* Hidden file input */} 
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+          accept="image/jpeg, image/png, image/gif" // Accept common image types
+        />
+      </div>
 
-export default RoomTypeImageManager; 
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Xác nhận Xóa Ảnh"
+        message="Bạn có chắc chắn muốn xóa hình ảnh này không?"
+        confirmText="Đồng ý Xóa"
+        confirmButtonVariant="danger"
+      />
+    </div>
+  )
+}
+
+RoomTypeImageManager.propTypes = {
+  roomTypeId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  roomTypeName: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
+}
+
+export default RoomTypeImageManager 

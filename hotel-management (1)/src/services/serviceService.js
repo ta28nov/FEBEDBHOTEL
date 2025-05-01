@@ -70,6 +70,26 @@ const serviceService = {
       throw error
     }
   },
+
+  // Các thao tác với danh mục dịch vụ
+  getAllCategories: async () => {
+    try {
+      // Note: Endpoint is named getServiceCategories
+      return await serviceEndpoints.getServiceCategories()
+    } catch (error) {
+      console.error("Lỗi lấy tất cả danh mục dịch vụ:", error)
+      throw error
+    }
+  },
+
+  createCategory: async (categoryData) => {
+    try {
+      return await serviceEndpoints.createCategory(categoryData)
+    } catch (error) {
+      console.error("Lỗi tạo danh mục dịch vụ:", error)
+      throw error
+    }
+  },
 }
 
 export default serviceService
