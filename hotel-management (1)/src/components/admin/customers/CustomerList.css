@@ -9,167 +9,237 @@
  * - Định dạng responsive
  */
 
-/* Customer List Styles */
+/* General Container */
 .customer-list-container {
-  padding: 20px;
+  padding: 25px;
+  background-color: #f9fafb; /* Light gray background */
+  border-radius: 8px;
 }
 
-.page-header {
+/* Header Section (Title, Search, Add Button) */
+.controls-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.page-header h1 {
+.controls-header h2 {
   margin: 0;
-  color: #1a1a2e;
-  font-size: 1.8rem;
+  color: #111827; /* Dark gray text */
+  font-size: 1.6rem;
+  font-weight: 600;
 }
 
-.add-button {
+.controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: #1a1a2e;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
-.add-button:hover {
-  background-color: #16213e;
-}
-
-.filter-section {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
+/* Search Box */
 .search-box {
   display: flex;
   align-items: center;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 15px;
-  margin-bottom: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb; /* Light border */
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 250px;
+}
+
+.search-box:focus-within {
+  border-color: #3b82f6; /* Blue border on focus */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .search-box svg {
-  color: #666;
-  margin-right: 10px;
+  color: #6b7280; /* Medium gray icon */
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .search-box input {
-  flex: 1;
+  flex-grow: 1;
   border: none;
   outline: none;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  background: none;
+  color: #111827;
 }
 
-.loading {
-  text-align: center;
-  padding: 40px;
-  font-size: 1.1rem;
-  color: #666;
+.search-box input::placeholder {
+  color: #9ca3af; /* Lighter gray placeholder */
 }
 
-.table-container {
+/* Add Button */
+.add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background-color: #1f2937; /* Dark blue/gray */
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.add-button:hover {
+  background-color: #111827; /* Slightly darker on hover */
+  transform: translateY(-1px);
+}
+
+.add-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Table Wrapper & Styling */
+.table-wrapper {
   overflow-x: auto;
-  background-color: white;
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.customer-table {
+.data-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.9rem;
 }
 
-.customer-table th,
-.customer-table td {
-  padding: 15px;
+.data-table th,
+.data-table td {
+  padding: 14px 16px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
 }
 
-.customer-table th {
-  background-color: #f8f9fa;
+.data-table th {
+  background-color: #f9fafb;
   font-weight: 600;
-  color: #333;
+  color: #4b5563; /* Darker secondary text */
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
 }
 
-.customer-table tr:hover {
-  background-color: #f8f9fa;
+.data-table th.sort-asc,
+.data-table th.sort-desc {
+  color: #3b82f6; /* Blue for sorted header */
 }
 
+.data-table th span {
+  margin-left: 5px;
+  opacity: 0.7;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f3f4f6; /* Light gray hover */
+}
+
+.data-table tbody tr td {
+  color: #1f2937; /* Dark text for body */
+}
+
+.data-table .no-data td {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
 }
 
-.edit-button,
-.delete-button,
-.history-button {
+.action-btn {
   background: none;
   border: none;
-  font-size: 1rem;
+  padding: 4px;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
-.edit-button {
-  color: #1976d2;
+.action-btn:hover {
+  transform: scale(1.1);
 }
 
-.edit-button:hover {
-  color: #1565c0;
+.view-btn {
+  color: #2563eb; /* Blue */
+}
+.view-btn:hover {
+  color: #1d4ed8;
 }
 
-.delete-button {
-  color: #e53935;
+.edit-btn {
+  color: #f59e0b; /* Amber */
+}
+.edit-btn:hover {
+  color: #d97706;
 }
 
-.delete-button:hover {
-  color: #c62828;
+.delete-btn {
+  color: #ef4444; /* Red */
+}
+.delete-btn:hover {
+  color: #dc2626;
 }
 
-.history-button {
-  color: #7b1fa2;
-}
-
-.history-button:hover {
-  color: #6a1b9a;
-}
-
+/* Pagination */
 .pagination {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  font-size: 0.9rem;
+  color: #6b7280;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  flex-wrap: wrap;
   gap: 10px;
-  padding: 15px;
-  border-top: 1px solid #eee;
+}
+
+.pagination div {
+  display: flex;
+  gap: 5px;
 }
 
 .pagination button {
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border: none;
+  padding: 6px 10px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
+  color: #6b7280;
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: #e0e0e0;
+  background-color: #f3f4f6;
+  border-color: #ccc;
 }
 
 .pagination button:disabled {
@@ -182,9 +252,69 @@
 }
 
 .pagination select {
-  padding: 5px 10px;
-  border: 1px solid #ddd;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
+  background-color: #fff;
+  color: #6b7280;
+}
+
+/* Error Message */
+.error-message {
+  color: #dc3545; /* Red text */
+  background-color: #f8d7da; /* Light red background */
+  border: 1px solid #f5c6cb; /* Red border */
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .controls-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .controls {
+    justify-content: space-between;
+  }
+  .search-box {
+    min-width: 0;
+    flex-grow: 1;
+  }
+  .add-button {
+    width: auto;
+    flex-shrink: 0;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 12px 10px;
+    white-space: normal; /* Allow wrapping */
+  }
+  .pagination {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .add-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .pagination div {
+    gap: 3px;
+  }
+  .pagination button {
+    padding: 5px 8px;
+  }
+  .pagination span {
+    margin: 0 5px;
+  }
 }
 
 /* Customer Form Styles */
@@ -282,13 +412,6 @@
 .form-group select.error,
 .form-group textarea.error {
   border-color: #ff6b6b;
-}
-
-.error-message {
-  display: block;
-  color: #ff6b6b;
-  font-size: 0.85rem;
-  margin-top: 5px;
 }
 
 .form-actions {
@@ -544,5 +667,14 @@
     align-items: flex-start;
     gap: 10px;
   }
+}
+.table-wrapper {
+  overflow-x: auto; /* Keep horizontal scroll if needed */
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  max-height: 65vh; /* Limit height (adjust vh value as needed) */
+  overflow-y: auto; /* Enable vertical scroll */
 }
 

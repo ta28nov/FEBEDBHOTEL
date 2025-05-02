@@ -1,5 +1,10 @@
 "\"use client"
 
+//chịu trách nhiệm xác thực người dùng, lưu trữ thông tin người dùng và cung cấp quyền truy cập cho các thành phần của ứng dụng
+//cung cấp các hàm để đăng nhập, đăng ký, đăng xuất, cập nhật thông tin người dùng và kiểm tra quyền truy cập 
+//sử dụng useContext để cung cấp thông tin người dùng cho các component con
+
+
 // Import các thư viện cần thiết
 import { createContext, useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"

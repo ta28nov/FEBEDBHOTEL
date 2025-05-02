@@ -6,22 +6,27 @@
  */
 import apiClient from "../apiClient"
 
+const BASE_URL = "/customers"; // Remove leading '/api'
+
 const customerEndpoints = {
   // Các thao tác với khách hàng
-  getAllCustomers: () => apiClient.get("/customers"),
-  getCustomerById: (id) => apiClient.get(`/customers/${id}`),
-  createCustomer: (customerData) => apiClient.post("/customers", customerData),
-  updateCustomer: (id, customerData) => apiClient.put(`/customers/${id}`, customerData),
-  deleteCustomer: (id) => apiClient.delete(`/customers/${id}`),
+  getAllCustomers: (searchTerm) => {
+    const params = searchTerm ? { searchTerm } : {};
+    return apiClient.get(BASE_URL, { params });
+  },
+  getCustomerById: (id) => apiClient.get(`${BASE_URL}/${id}`),
+  createCustomer: (customerData) => apiClient.post(BASE_URL, customerData),
+  updateCustomer: (id, customerData) => apiClient.put(`${BASE_URL}/${id}`, customerData),
+  deleteCustomer: (id) => apiClient.delete(`${BASE_URL}/${id}`),
 
-  // Tìm kiếm khách hàng
-  searchCustomers: (query) => apiClient.get("/customers/search", { params: { query } }),
+  // Tìm kiếm khách hàng - GET /api/customers handled this via searchTerm parameter
+  // searchCustomers: (query) => apiClient.get("/customers/search", { params: { query } }), // Remove this as it's covered by getAllCustomers
 
   // Lịch sử đặt phòng của khách hàng
-  getCustomerBookingHistory: (customerId) => apiClient.get(`/customers/${customerId}/bookings`),
+  getCustomerBookingHistory: (customerId) => apiClient.get(`${BASE_URL}/${customerId}/bookings`),
 
-  // Thống kê khách hàng
-  getCustomerStatistics: () => apiClient.get("/customers/statistics"),
+  // Thống kê khách hàng - Assuming this endpoint still exists, adjust if needed
+  getCustomerStatistics: () => apiClient.get(`${BASE_URL}/statistics`), // Adjusted path
 }
 
 export default customerEndpoints

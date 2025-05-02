@@ -12,134 +12,180 @@
  * Quyền truy cập: Admin và Employee
  */
 
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useForm, Controller } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { FaTimes } from "react-icons/fa"
-import { motion } from "framer-motion"
-import "./CustomerList.css"
+import Modal from "../../common/Modal"
+import Spinner from "../../common/Spinner"
+import "./CustomerForm.css"
 
-// Validation schema
+// Validation Schema
 const schema = yup.object().shape({
-  name: yup.string().required("Họ tên là bắt buộc"),
-  email: yup.string().email("Email không hợp lệ").required("Email là bắt buộc"),
-  phone: yup.string().required("Số điện thoại là bắt buộc"),
-  idNumber: yup.string().required("CCCD/Passport là bắt buộc"),
-  address: yup.string().required("Địa chỉ là bắt buộc"),
-  nationality: yup.string().required("Quốc tịch là bắt buộc"),
+  firstName: yup.string().required("Họ là bắt buộc").max(50, "Họ không được vượt quá 50 ký tự"),
+  lastName: yup.string().required("Tên là bắt buộc").max(50, "Tên không được vượt quá 50 ký tự"),
+  email: yup
+    .string()
+    .email("Email không hợp lệ")
+    .max(100, "Email không được vượt quá 100 ký tự")
+    .nullable()
+    .transform(value => (value ? value : null)), // Ensure empty string becomes null
+  phoneNumber: yup
+    .string()
+    .required("Số điện thoại là bắt buộc")
+    .matches(/^[0-9]+$/, "Số điện thoại chỉ được chứa số")
+    .max(20, "Số điện thoại không được vượt quá 20 ký tự"),
+  idNumber: yup.string().max(50, "Số CCCD/HC không được vượt quá 50 ký tự").nullable(),
+  nationality: yup.string().max(50, "Quốc tịch không được vượt quá 50 ký tự").nullable(),
 })
 
-const CustomerForm = ({ customer, onSubmit, onCancel }) => {
+const CustomerForm = ({ isOpen, onClose, onSave, customerData, isSubmitting }) => {
+  const isEditMode = Boolean(customerData)
+
   const {
     register,
     handleSubmit,
-    setValue,
+    control, // Use Controller for potential future custom inputs
     formState: { errors },
     reset,
+    setValue,
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
-      phone: "",
+      phoneNumber: "",
       idNumber: "",
-      address: "",
-      nationality: "Việt Nam",
+      nationality: "",
     },
   })
 
-  // Set form values if editing an existing customer
+  // Populate form when in edit mode or when customerData changes
   useEffect(() => {
-    if (customer) {
-      const fields = ["name", "email", "phone", "idNumber", "address", "nationality"]
-      fields.forEach((field) => setValue(field, customer[field]))
+    if (isEditMode && customerData) {
+      // Ensure nulls are handled correctly, default to empty string for form fields
+      setValue("firstName", customerData.firstName || "")
+      setValue("lastName", customerData.lastName || "")
+      setValue("email", customerData.email || "")
+      setValue("phoneNumber", customerData.phoneNumber || "")
+      setValue("idNumber", customerData.idNumber || "")
+      setValue("nationality", customerData.nationality || "")
+    } else {
+      reset() // Reset form for add mode or if customerData becomes null
     }
-  }, [customer, setValue])
+  }, [customerData, isEditMode, setValue, reset])
 
-  const onFormSubmit = (data) => {
-    onSubmit(data)
+  const onSubmit = (data) => {
+    // Convert empty strings back to null for optional fields before saving
+    const payload = {
+      ...data,
+      email: data.email || null,
+      idNumber: data.idNumber || null,
+      nationality: data.nationality || null,
+    };
+    onSave(payload)
   }
 
   return (
-    <div className="customer-form-overlay">
-      <motion.div
-        className="customer-form-container"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="form-header">
-          <h2>{customer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}</h2>
-          <button className="close-button" onClick={onCancel}>
-            <FaTimes />
-          </button>
+    <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? "Sửa thông tin Khách hàng" : "Thêm Khách hàng mới"} className="customer-form-modal">
+      <form onSubmit={handleSubmit(onSubmit)} className="customer-form" noValidate>
+        <div className="form-grid">
+          {/* First Name */}
+          <div className="form-group">
+            <label htmlFor="firstName" className="required">
+              Họ
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              {...register("firstName")}
+              aria-invalid={errors.firstName ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.firstName && <p className="error-message">{errors.firstName.message}</p>}
+          </div>
+
+          {/* Last Name */}
+          <div className="form-group">
+            <label htmlFor="lastName" className="required">
+              Tên
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              {...register("lastName")}
+              aria-invalid={errors.lastName ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.lastName && <p className="error-message">{errors.lastName.message}</p>}
+          </div>
+
+          {/* Phone Number */}
+          <div className="form-group">
+            <label htmlFor="phoneNumber" className="required">
+              Số điện thoại
+            </label>
+            <input
+              id="phoneNumber"
+              type="tel" // Use type=tel for better mobile UX
+              {...register("phoneNumber")}
+              aria-invalid={errors.phoneNumber ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.phoneNumber && <p className="error-message">{errors.phoneNumber.message}</p>}
+          </div>
+
+          {/* Email */}
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              {...register("email")}
+              aria-invalid={errors.email ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.email && <p className="error-message">{errors.email.message}</p>}
+          </div>
+
+          {/* ID Number */}
+          <div className="form-group">
+            <label htmlFor="idNumber">Số CCCD/HC</label>
+            <input
+              id="idNumber"
+              type="text"
+              {...register("idNumber")}
+              aria-invalid={errors.idNumber ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.idNumber && <p className="error-message">{errors.idNumber.message}</p>}
+          </div>
+
+          {/* Nationality */}
+          <div className="form-group">
+            <label htmlFor="nationality">Quốc tịch</label>
+            <input
+              id="nationality"
+              type="text"
+              {...register("nationality")}
+              aria-invalid={errors.nationality ? "true" : "false"}
+              disabled={isSubmitting}
+            />
+            {errors.nationality && <p className="error-message">{errors.nationality.message}</p>}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="customer-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="name">Họ tên</label>
-              <input type="text" id="name" {...register("name")} className={errors.name ? "error" : ""} />
-              {errors.name && <span className="error-message">{errors.name.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" {...register("email")} className={errors.email ? "error" : ""} />
-              {errors.email && <span className="error-message">{errors.email.message}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="phone">Số điện thoại</label>
-              <input type="tel" id="phone" {...register("phone")} className={errors.phone ? "error" : ""} />
-              {errors.phone && <span className="error-message">{errors.phone.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="idNumber">CCCD/Passport</label>
-              <input type="text" id="idNumber" {...register("idNumber")} className={errors.idNumber ? "error" : ""} />
-              {errors.idNumber && <span className="error-message">{errors.idNumber.message}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="nationality">Quốc tịch</label>
-              <input
-                type="text"
-                id="nationality"
-                {...register("nationality")}
-                className={errors.nationality ? "error" : ""}
-              />
-              {errors.nationality && <span className="error-message">{errors.nationality.message}</span>}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Địa chỉ</label>
-            <textarea
-              id="address"
-              {...register("address")}
-              className={errors.address ? "error" : ""}
-              rows="3"
-            ></textarea>
-            {errors.address && <span className="error-message">{errors.address.message}</span>}
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={onCancel}>
-              Hủy
-            </button>
-            <button type="submit" className="submit-button">
-              {customer ? "Cập nhật" : "Thêm mới"}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
+        <div className="modal-actions">
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="btn btn-secondary">
+            Hủy
+          </button>
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+            {isSubmitting ? <Spinner size="sm" /> : isEditMode ? "Lưu thay đổi" : "Thêm Khách hàng"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
