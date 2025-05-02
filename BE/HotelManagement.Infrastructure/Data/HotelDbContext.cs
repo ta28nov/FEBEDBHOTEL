@@ -2,6 +2,7 @@ using HotelManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.SqlServer.Metadata.Internal; // Needed for SqlServerAnnotationNames
+using HotelManagement.Application.Common.Models; // Added for DTOs
 
 namespace HotelManagement.Infrastructure.Data;
 
@@ -29,6 +30,10 @@ public class HotelDbContext : DbContext
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
     public DbSet<Review> Reviews { get; set; }
+
+    // Add DbSets for Report DTOs (used for mapping SP results)
+    public DbSet<MonthlyRevenueReportDto> MonthlyRevenueReports { get; set; }
+    public DbSet<OccupancyReportDto> OccupancyReports { get; set; }
 
     /// <summary>
     /// Cấu hình mô hình dữ liệu và mối quan hệ giữa các entity
@@ -276,6 +281,7 @@ public class HotelDbContext : DbContext
             entity.ToTable("Reviews");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Rating).IsRequired();
+            entity.Property(e => e.Comment).HasMaxLength(500);
             entity.Property(e => e.ReviewDate).HasDefaultValueSql("GETDATE()");
             
             // Mối quan hệ với Booking
@@ -284,5 +290,12 @@ public class HotelDbContext : DbContext
                 .HasForeignKey(e => e.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Configure Report DTOs as Keyless Entity Types
+        modelBuilder.Entity<MonthlyRevenueReportDto>().HasNoKey();
+        modelBuilder.Entity<OccupancyReportDto>().HasNoKey();
+
+        // Apply configurations from assembly (if any)
+        // modelBuilder.ApplyConfigurationsFromAssembly(typeof(HotelDbContext).Assembly);
     }
 }

@@ -5,68 +5,119 @@
  *
  * Vai trò: Trang báo cáo thống kê cho admin.
  * Chức năng:
- * - Hiển thị báo cáo doanh thu
- * - Hiển thị báo cáo công suất phòng
- * - Hiển thị báo cáo dịch vụ
- * - Xuất báo cáo
+ * - Hiển thị báo cáo doanh thu (theo tháng, tổng hợp năm)
+ * - Hiển thị báo cáo công suất phòng (theo ngày)
  *
  * Quyền truy cập: Admin
  */
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Line, Bar, Pie } from "react-chartjs-2"
-import { FaDownload, FaChartLine, FaHotel, FaCogs } from "react-icons/fa"
-import { format } from "date-fns"
+import { Line, Bar } from "react-chartjs-2"
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { FaChartLine, FaHotel } from "react-icons/fa"
+import { format, parseISO, getYear, getMonth, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns"
+import { vi } from 'date-fns/locale';
 import { toast } from "react-toastify"
 import reportService from "../../../services/reportService"
 import "./Reports.css"
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("revenue")
-  const [period, setPeriod] = useState("monthly")
   const [revenueData, setRevenueData] = useState(null)
   const [occupancyData, setOccupancyData] = useState(null)
-  const [serviceData, setServiceData] = useState(null)
-  const [dateRange, setDateRange] = useState({
-    startDate: format(new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd"),
-  })
+  const [activeQuickSelect, setActiveQuickSelect] = useState('last6Months');
+  const [dateRange, setDateRange] = useState(() => {
+      const endDate = new Date();
+      const startDate = startOfMonth(subMonths(endDate, 5));
+      return {
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+      }
+  });
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchReportData()
-  }, [activeTab, period, dateRange])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, dateRange])
 
   const fetchReportData = async () => {
     setLoading(true)
+    setRevenueData(null);
+    setOccupancyData(null);
     try {
+      const { startDate, endDate } = dateRange;
+      if (!startDate || !endDate) {
+          toast.warn("Vui lòng chọn khoảng thời gian hợp lệ.");
+          setLoading(false);
+          return;
+      }
+
       switch (activeTab) {
         case "revenue":
-          const revenueResponse = await reportService.getRevenueReport(period, dateRange.startDate, dateRange.endDate)
-          prepareRevenueChartData(revenueResponse.data)
+          const revenueResponse = await reportService.getRevenueReport(startDate, endDate)
+          prepareRevenueChartData(revenueResponse.data || [])
           break
         case "occupancy":
-          const occupancyResponse = await reportService.getOccupancyReport(
-            period,
-            dateRange.startDate,
-            dateRange.endDate,
-          )
-          prepareOccupancyChartData(occupancyResponse.data)
-          break
-        case "services":
-          const serviceResponse = await reportService.getServiceReport("byCategory")
-          prepareServiceChartData(serviceResponse.data)
+          const occupancyResponse = await reportService.getOccupancyReport(startDate, endDate)
+          prepareOccupancyChartData(occupancyResponse.data || [])
           break
         default:
           break
       }
     } catch (error) {
       toast.error("Không thể tải dữ liệu báo cáo")
-      console.error(error)
+      console.error("Error fetching report data:", error)
+      if(activeTab === 'revenue') setRevenueData(null);
+      if(activeTab === 'occupancy') setOccupancyData(null);
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleQuickSelect = (period) => {
+    setActiveQuickSelect(period);
+    let startDate, endDate = new Date();
+
+    switch (period) {
+      case 'thisMonth':
+        startDate = startOfMonth(endDate);
+        break;
+      case 'last6Months':
+        const sixMonthsAgo = subMonths(endDate, 5);
+        startDate = startOfMonth(sixMonthsAgo);
+        break;
+      case 'thisYear':
+        startDate = startOfYear(endDate);
+        break;
+      default:
+        const defaultStart = subMonths(endDate, 5);
+        startDate = startOfMonth(defaultStart);
+        break;
+    }
+
+    setDateRange({
+        startDate: format(startDate, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+    });
+  };
+
+  const handleManualDateChange = (e) => {
+    setActiveQuickSelect(null);
+    handleDateRangeChange(e);
   }
 
   const handleDateRangeChange = (e) => {
@@ -74,111 +125,174 @@ const Reports = () => {
     setDateRange((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleExportReport = async () => {
-    try {
-      let response
-      switch (activeTab) {
-        case "revenue":
-          response = await reportService.exportRevenueReport(period, "xlsx")
-          break
-        case "occupancy":
-          response = await reportService.exportOccupancyReport(period, "xlsx")
-          break
-        case "services":
-          response = await reportService.exportServiceReport("byCategory", "xlsx")
-          break
-        default:
-          break
-      }
-
-      // Create a download link for the blob
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement("a")
-      link.href = url
-      link.setAttribute("download", `${activeTab}-report.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      toast.success("Xuất báo cáo thành công")
-    } catch (error) {
-      toast.error("Không thể xuất báo cáo")
-      console.error(error)
+  const prepareRevenueChartData = (monthlyData) => {
+    if (!monthlyData || monthlyData.length === 0) {
+        setRevenueData(null);
+        return;
     }
-  }
+    monthlyData.sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+    });
+    const monthlyLabels = monthlyData.map(item => `T${item.month}/${item.year}`);
+    const monthlyRevenue = monthlyData.map(item => item.totalRevenue / 1000000);
+    const yearlyAggregation = monthlyData.reduce((acc, item) => {
+      acc[item.year] = (acc[item.year] || 0) + item.totalRevenue;
+      return acc;
+    }, {});
+    const yearlyTotalData = monthlyData.map(item => (yearlyAggregation[item.year] || 0) / 1000000);
 
-  // Prepare revenue chart data
-  const prepareRevenueChartData = (data) => {
-    const labels = data.map((item) => {
-      const date = new Date(item.date || item.month || item.year)
-      return period === "daily"
-        ? format(date, "dd/MM")
-        : period === "monthly"
-          ? format(date, "MM/yyyy")
-          : format(date, "yyyy")
-    })
-
-    const chartData = {
-      labels,
+    setRevenueData({
+      labels: monthlyLabels,
       datasets: [
         {
-          label: "Doanh thu",
-          data: data.map((item) => item.revenue / 1000000), // Convert to millions
-          borderColor: "#1a1a2e",
-          backgroundColor: "rgba(26, 26, 46, 0.1)",
-          tension: 0.4,
+          label: "Doanh thu Tháng",
+          data: monthlyRevenue,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          tension: 0.3,
           fill: true,
+          yAxisID: 'yMonthly',
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          pointBackgroundColor: "#3b82f6",
         },
-        {
-          label: "Doanh thu dịch vụ",
-          data: data.map((item) => item.services / 1000000), // Convert to millions
-          borderColor: "#b8860b",
-          backgroundColor: "rgba(184, 134, 11, 0.1)",
-          tension: 0.4,
-          fill: true,
+         {
+          label: "Tổng Năm",
+          data: yearlyTotalData,
+          borderColor: "#14b8a6",
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'yYearly',
+          pointRadius: 0,
+          pointHoverRadius: 0,
         },
       ],
-    }
-
-    setRevenueData(chartData)
+    })
   }
 
-  // Prepare occupancy chart data
-  const prepareOccupancyChartData = (data) => {
-    const labels = data.map((item) => {
-      const date = new Date(item.date || item.month)
-      return period === "daily" ? format(date, "dd/MM") : format(date, "MM/yyyy")
-    })
+  const prepareOccupancyChartData = (dailyData) => {
+     if (!dailyData || dailyData.length === 0) {
+        setOccupancyData(null);
+        return;
+    }
+    dailyData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const labels = dailyData.map(item => format(parseISO(item.date), "dd/MM", { locale: vi }));
+    const occupancyPercentage = dailyData.map(item => (item.occupancyRate || 0) * 100);
 
-    const chartData = {
+    setOccupancyData({
       labels,
       datasets: [
         {
           label: "Tỷ lệ lấp đầy (%)",
-          data: data.map((item) => item.occupancy),
-          backgroundColor: "#1a1a2e",
-        },
-      ],
-    }
-
-    setOccupancyData(chartData)
-  }
-
-  // Prepare service chart data
-  const prepareServiceChartData = (data) => {
-    const chartData = {
-      labels: data.map((item) => item.category.charAt(0).toUpperCase() + item.category.slice(1)),
-      datasets: [
-        {
-          label: "Doanh thu dịch vụ",
-          data: data.map((item) => item.revenue / 1000000), // Convert to millions
-          backgroundColor: ["#1a1a2e", "#b8860b", "#16213e", "#d4af37", "#0f3460", "#950740"],
+          data: occupancyPercentage,
+          backgroundColor: "rgba(16, 185, 129, 0.7)",
+          borderColor: "#059669",
           borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6,
+          categoryPercentage: 0.7,
         },
       ],
-    }
-
-    setServiceData(chartData)
+    })
   }
+
+  const baseChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              titleFont: { weight: 'bold' },
+              bodyFont: { size: 13 },
+              padding: 10,
+              cornerRadius: 4,
+              displayColors: true,
+              boxPadding: 4,
+          },
+      },
+      scales: {
+          x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 }, color: '#4b5563' },
+          },
+          y: {
+              beginAtZero: true,
+              grid: { color: '#e5e7eb' },
+              ticks: { font: { size: 11 }, color: '#4b5563' },
+          },
+      },
+      interaction: {
+          mode: 'index',
+          intersect: false,
+      },
+  };
+
+  const revenueChartOptions = {
+      ...baseChartOptions,
+      plugins: {
+          ...baseChartOptions.plugins,
+          tooltip: {
+              ...baseChartOptions.plugins.tooltip,
+              callbacks: {
+                  label: (context) => {
+                      let label = context.dataset.label || '';
+                      if (label) { label += ': '; }
+                      if (context.parsed.y !== null) {
+                          label += `${context.parsed.y.toFixed(2)} triệu VND`;
+                      }
+                      return label;
+                  }
+              },
+          },
+      },
+      scales: {
+          ...baseChartOptions.scales,
+          x: { ...baseChartOptions.scales.x, title: { display: true, text: 'Thời gian', color: '#4b5563' } },
+          yMonthly: {
+              ...baseChartOptions.scales.y,
+              position: 'left',
+              title: { display: true, text: 'Doanh thu Tháng (Triệu VND)', color: '#4b5563' },
+          },
+           yYearly: {
+              ...baseChartOptions.scales.y,
+              position: 'right',
+              title: { display: true, text: 'Tổng Doanh thu Năm (Triệu VND)', color: '#4b5563' },
+              grid: { drawOnChartArea: false },
+          },
+      },
+  };
+
+ const occupancyChartOptions = {
+      ...baseChartOptions,
+      plugins: {
+          ...baseChartOptions.plugins,
+          legend: { display: false },
+          tooltip: {
+              ...baseChartOptions.plugins.tooltip,
+              callbacks: {
+                  label: (context) => {
+                      let label = context.dataset.label || '';
+                      if (label) { label += ': '; }
+                      if (context.parsed.y !== null) {
+                          label += `${context.parsed.y.toFixed(1)}%`;
+                      }
+                      return label;
+                  }
+              },
+          },
+      },
+      scales: {
+          ...baseChartOptions.scales,
+          x: { ...baseChartOptions.scales.x, title: { display: true, text: 'Ngày', color: '#4b5563' } },
+          y: {
+              ...baseChartOptions.scales.y,
+              max: 100,
+              title: { display: true, text: 'Tỷ lệ lấp đầy (%)', color: '#4b5563' },
+          },
+      },
+ };
 
   return (
     <div className="reports-container">
@@ -189,9 +303,6 @@ const Reports = () => {
         className="page-header"
       >
         <h1>Báo cáo thống kê</h1>
-        <button className="export-button" onClick={handleExportReport}>
-          <FaDownload /> Xuất báo cáo
-        </button>
       </motion.div>
 
       <div className="report-tabs">
@@ -207,12 +318,6 @@ const Reports = () => {
         >
           <FaHotel /> Công suất phòng
         </button>
-        <button
-          className={`tab-button ${activeTab === "services" ? "active" : ""}`}
-          onClick={() => setActiveTab("services")}
-        >
-          <FaCogs /> Dịch vụ
-        </button>
       </div>
 
       <motion.div
@@ -221,33 +326,41 @@ const Reports = () => {
         transition={{ duration: 0.3, delay: 0.1 }}
         className="report-controls"
       >
-        {activeTab !== "services" && (
-          <>
-            <div className="period-selector">
-              <label>Kỳ báo cáo:</label>
-              <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-                <option value="daily">Ngày</option>
-                <option value="monthly">Tháng</option>
-                {activeTab === "revenue" && <option value="yearly">Năm</option>}
-              </select>
-            </div>
+         <div className="quick-select-buttons">
+            <button
+                className={`quick-select-btn ${activeQuickSelect === 'thisMonth' ? 'active' : ''}`}
+                onClick={() => handleQuickSelect('thisMonth')}
+            >
+                Tháng này
+            </button>
+             <button
+                className={`quick-select-btn ${activeQuickSelect === 'last6Months' ? 'active' : ''}`}
+                onClick={() => handleQuickSelect('last6Months')}
+            >
+                6 Tháng qua
+            </button>
+            <button
+                className={`quick-select-btn ${activeQuickSelect === 'thisYear' ? 'active' : ''}`}
+                onClick={() => handleQuickSelect('thisYear')}
+            >
+                Năm nay
+            </button>
+         </div>
 
-            <div className="date-range">
+         <div className="date-range">
               <div className="date-input">
-                <label>Từ ngày:</label>
-                <input type="date" name="startDate" value={dateRange.startDate} onChange={handleDateRangeChange} />
+                <label htmlFor="report-startDate">Từ ngày:</label>
+                <input id="report-startDate" type="date" name="startDate" value={dateRange.startDate} onChange={handleManualDateChange} />
               </div>
               <div className="date-input">
-                <label>Đến ngày:</label>
-                <input type="date" name="endDate" value={dateRange.endDate} onChange={handleDateRangeChange} />
+                <label htmlFor="report-endDate">Đến ngày:</label>
+                <input id="report-endDate" type="date" name="endDate" value={dateRange.endDate} onChange={handleManualDateChange} />
               </div>
             </div>
-          </>
-        )}
       </motion.div>
 
       {loading ? (
-        <div className="loading">Đang tải dữ liệu...</div>
+        <div className="loading-indicator">Đang tải dữ liệu báo cáo...</div>
       ) : (
         <motion.div
           initial={{ opacity: 0 }}
@@ -255,86 +368,34 @@ const Reports = () => {
           transition={{ duration: 0.3, delay: 0.2 }}
           className="report-content"
         >
-          {activeTab === "revenue" && revenueData && (
-            <div className="chart-container">
-              <h3>Báo cáo doanh thu (triệu VND)</h3>
-              <Line
-                data={revenueData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      position: "top",
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: (context) => `${context.dataset.label}: ${context.parsed.y} triệu VND`,
-                      },
-                    },
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: "Triệu VND",
-                      },
-                    },
-                  },
-                }}
-              />
-            </div>
+          {activeTab === "revenue" && (
+              <motion.div layout className="chart-container">
+                 {revenueData ? (
+                    <>
+                        <h3>Doanh thu theo thời gian</h3>
+                        <div className="chart-wrapper">
+                            <Line data={revenueData} options={revenueChartOptions} />
+                        </div>
+                    </>
+                 ) : (
+                     <p className="no-data-message">Không có dữ liệu doanh thu cho khoảng thời gian đã chọn.</p>
+                 )}
+              </motion.div>
           )}
 
-          {activeTab === "occupancy" && occupancyData && (
-            <div className="chart-container">
-              <h3>Báo cáo công suất phòng (%)</h3>
-              <Bar
-                data={occupancyData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      position: "top",
-                    },
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      title: {
-                        display: true,
-                        text: "Tỷ lệ (%)",
-                      },
-                    },
-                  },
-                }}
-              />
-            </div>
-          )}
-
-          {activeTab === "services" && serviceData && (
-            <div className="chart-container">
-              <h3>Báo cáo doanh thu theo loại dịch vụ (triệu VND)</h3>
-              <div className="pie-chart-container">
-                <Pie
-                  data={serviceData}
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: "right",
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: (context) => `${context.label}: ${context.parsed} triệu VND`,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
+          {activeTab === "occupancy" && (
+             <motion.div layout className="chart-container">
+                {occupancyData ? (
+                    <>
+                        <h3>Công suất phòng hàng ngày</h3>
+                        <div className="chart-wrapper">
+                            <Bar data={occupancyData} options={occupancyChartOptions} />
+                        </div>
+                    </>
+                ) : (
+                    <p className="no-data-message">Không có dữ liệu công suất phòng cho khoảng thời gian đã chọn.</p>
+                )}
+              </motion.div>
           )}
         </motion.div>
       )}

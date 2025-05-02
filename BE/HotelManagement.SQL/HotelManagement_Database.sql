@@ -255,46 +255,31 @@ CREATE TABLE Reviews (
 );
 GO
 
--- Tạo Stored Procedure cho báo cáo doanh thu theo tháng
-CREATE PROCEDURE GetMonthlyRevenueReport
-    @Year INT = NULL
+-- Tạo Stored Procedure cho báo cáo doanh thu theo tháng (Đã sửa để nhận StartDate, EndDate)
+CREATE PROCEDURE GetMonthlyRevenueReport -- Changed back to CREATE
+    @StartDate DATETIME2,
+    @EndDate DATETIME2
 AS
 BEGIN
     SET NOCOUNT ON;
-    
-    IF @Year IS NULL
-        SET @Year = YEAR(GETDATE());
-    
-    WITH ServiceRevenues AS (
-        SELECT 
-            b.Id AS BookingId,
-            SUM(bs.Price * bs.Quantity) AS ServiceRevenue
-        FROM 
-            BookingServices bs
-        JOIN 
-            Bookings b ON bs.BookingId = b.Id
-        WHERE 
-            YEAR(b.CheckOutDate) = @Year
-            AND b.Status = 'checked_out'
-        GROUP BY 
-            b.Id
-    )
-    
-    SELECT 
-        MONTH(b.CheckOutDate) AS Month,
-        SUM(b.TotalAmount) AS Revenue,
-        SUM(ISNULL(sr.ServiceRevenue, 0)) AS Services,
-        COUNT(b.Id) AS BookingsCount
-    FROM 
+
+    -- Logic mới dựa trên StartDate và EndDate
+    SELECT
+        MONTH(b.CreatedAt) AS Month,
+        YEAR(b.CreatedAt) AS Year,
+        SUM(b.TotalAmount) AS TotalRevenue
+    FROM
         Bookings b
-    LEFT JOIN 
-        ServiceRevenues sr ON b.Id = sr.BookingId
-    WHERE 
-        YEAR(b.CheckOutDate) = @Year
-        AND b.Status = 'checked_out'
-    GROUP BY 
-        MONTH(b.CheckOutDate)
-    ORDER BY 
+    WHERE
+        b.Status NOT IN ('cancelled', 'pending')
+        AND b.PaymentStatus IN ('paid', 'partial')
+        AND b.CreatedAt >= @StartDate -- Lọc theo ngày bắt đầu
+        AND b.CreatedAt <= @EndDate   -- Lọc theo ngày kết thúc
+    GROUP BY
+        YEAR(b.CreatedAt),
+        MONTH(b.CreatedAt)
+    ORDER BY
+        Year,
         Month;
 END;
 GO
@@ -323,12 +308,22 @@ BEGIN
         SET @CurrentDate = DATEADD(DAY, 1, @CurrentDate);
     END;
     
+    -- Khai báo và tính toán số phòng có sẵn (Thêm dòng này)
+    DECLARE @TotalAvailableRooms INT;
+    SELECT @TotalAvailableRooms = COUNT(*) FROM Rooms WHERE Status <> 'maintenance';
+    
     -- Tính toán công suất phòng theo ngày
     SELECT 
         d.Date,
         COUNT(DISTINCT b.RoomId) AS OccupiedRooms,
         (SELECT COUNT(*) FROM Rooms) AS TotalRooms,
-        CAST(COUNT(DISTINCT b.RoomId) AS FLOAT) / (SELECT COUNT(*) FROM Rooms) * 100 AS OccupancyRate
+        -- Tính tỷ lệ lấp đầy, tránh chia cho 0
+        CASE
+            WHEN @TotalAvailableRooms > 0 THEN
+                -- Ép kiểu kết quả sang DECIMAL(5, 4) để khớp DTO
+                CAST((COUNT(b.Id) * 1.0 / @TotalAvailableRooms) AS DECIMAL(5, 4))
+            ELSE 0
+        END AS OccupancyRate
     FROM 
         @AllDates d
     LEFT JOIN 

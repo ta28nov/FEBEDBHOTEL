@@ -253,39 +253,53 @@ const Invoices = () => {
         >
           <table {...getTableProps()} className="invoices-table">
             <thead>
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      key={column.id}
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
-                      className={column.isSorted ? (column.isSortedDesc ? "sort-desc" : "sort-asc") : ""}
-                    >
-                      {column.render("Header")}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
+              {headerGroups.map((headerGroup) => {
+                // Extract key for header group row
+                const { key: hgKey, ...hgProps } = headerGroup.getHeaderGroupProps();
+                return (
+                  <tr key={hgKey} {...hgProps}>
+                    {headerGroup.headers.map((column) => {
+                      // Extract key for header cell
+                      const { key: hKey, ...hProps } = column.getHeaderProps(column.getSortByToggleProps());
+                      return (
+                        <th
+                          key={hKey}
+                          {...hProps}
+                          className={column.isSorted ? (column.isSortedDesc ? "sort-desc" : "sort-asc") : ""}
+                        >
+                          {column.render("Header")}
+                          <span>
+                            {column.isSorted
+                              ? column.isSortedDesc
+                                ? ' 🔽'
+                                : ' 🔼'
+                              : ''}
+                          </span>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </thead>
             <tbody {...getTableBodyProps()}>
               {page.map((row) => {
-                prepareRow(row)
+                prepareRow(row);
+                // Extract key for body row
+                const { key: rKey, ...rProps } = row.getRowProps();
                 return (
-                  <tr {...row.getRowProps()} key={row.id}>
-                    {row.cells.map((cell) => (
-                      <td {...cell.getCellProps()} key={cell.id}>
-                        {cell.render("Cell")}
-                      </td>
-                    ))}
+                  <tr key={rKey} {...rProps}>
+                    {row.cells.map((cell) => {
+                      // Extract key for body cell
+                      const { key: cKey, ...cProps } = cell.getCellProps();
+                      return (
+                        <td key={cKey} {...cProps}>
+                          {cell.render("Cell")}
+                        </td>
+                      );
+                    })}
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>

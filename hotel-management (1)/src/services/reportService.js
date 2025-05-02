@@ -8,20 +8,30 @@
 import { reportEndpoints } from "../api"
 
 const reportService = {
-  // Báo cáo doanh thu
-  getRevenueReport: async (period, startDate, endDate) => {
+  /**
+   * Lấy dữ liệu báo cáo doanh thu theo tháng.
+   * @param {string} startDate - YYYY-MM-DD
+   * @param {string} endDate - YYYY-MM-DD
+   * @returns {Promise<Object>} Dữ liệu báo cáo
+   */
+  getRevenueReport: async (startDate, endDate) => {
     try {
-      return await reportEndpoints.getRevenueReport(period, startDate, endDate)
+      return await reportEndpoints.getMonthlyRevenue(startDate, endDate)
     } catch (error) {
       console.error("Lỗi lấy báo cáo doanh thu:", error)
       throw error
     }
   },
 
-  // Báo cáo công suất phòng
-  getOccupancyReport: async (period, startDate, endDate) => {
+  /**
+   * Lấy dữ liệu báo cáo công suất phòng theo ngày.
+   * @param {string} startDate - YYYY-MM-DD
+   * @param {string} endDate - YYYY-MM-DD
+   * @returns {Promise<Object>} Dữ liệu báo cáo
+   */
+  getOccupancyReport: async (startDate, endDate) => {
     try {
-      return await reportEndpoints.getOccupancyReport(period, startDate, endDate)
+      return await reportEndpoints.getOccupancy(startDate, endDate)
     } catch (error) {
       console.error("Lỗi lấy báo cáo công suất phòng:", error)
       throw error
