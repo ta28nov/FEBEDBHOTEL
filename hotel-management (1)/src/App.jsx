@@ -4,7 +4,6 @@
 import { Routes, Route, Navigate } from "react-router-dom"
 import { AnimatePresence } from "framer-motion"
 import { useAuth } from "./context/AuthContext"
-import SmoothScroll from "./components/SmoothScroll/SmoothScroll"
 
 // Import các trang công khai
 import HomePage from "./pages/HomePage/HomePage"
@@ -56,73 +55,71 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
 function App() {
   return (
-    <SmoothScroll>
-      <AnimatePresence mode="wait">
-        <Routes>
-          {/* Các route công khai */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/rooms" element={<RoomsPage />} />
-          <Route path="/rooms/:id" element={<RoomDetailPage />} />
-          <Route path="/booking" element={<BookingPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+    <AnimatePresence mode="wait">
+      <Routes>
+        {/* Các route công khai */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/rooms" element={<RoomsPage />} />
+        <Route path="/rooms/:id" element={<RoomDetailPage />} />
+        <Route path="/booking" element={<BookingPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-          {/* Route người dùng được bảo vệ */}
+        {/* Route người dùng được bảo vệ */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <UserProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Route quản trị */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole={["admin", "employee"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="rooms" element={<AdminRooms />} />
+          <Route path="customers" element={<AdminCustomers />} />
+          <Route path="services" element={<AdminServices />} />
+          <Route path="bookings" element={<AdminBookings />} />
+          <Route path="invoices" element={<AdminInvoices />} />
+
+          {/* Route chỉ dành cho admin */}
           <Route
-            path="/profile"
+            path="reports"
             element={
-              <ProtectedRoute>
-                <UserProfilePage />
+              <ProtectedRoute requiredRole="admin">
+                <AdminReports />
               </ProtectedRoute>
             }
           />
-
-          {/* Route quản trị */}
           <Route
-            path="/admin"
+            path="users"
             element={
-              <ProtectedRoute requiredRole={["admin", "employee"]}>
-                <AdminLayout />
+              <ProtectedRoute requiredRole="admin">
+                <AdminUsers />
               </ProtectedRoute>
             }
-          >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="rooms" element={<AdminRooms />} />
-            <Route path="customers" element={<AdminCustomers />} />
-            <Route path="services" element={<AdminServices />} />
-            <Route path="bookings" element={<AdminBookings />} />
-            <Route path="invoices" element={<AdminInvoices />} />
+          />
+        </Route>
 
-            {/* Route chỉ dành cho admin */}
-            <Route
-              path="reports"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminReports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="users"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AdminUsers />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
-
-          {/* Route 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AnimatePresence>
-    </SmoothScroll>
+        {/* Route 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AnimatePresence>
   )
 }
 

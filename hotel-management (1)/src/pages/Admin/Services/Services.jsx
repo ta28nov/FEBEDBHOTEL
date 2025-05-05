@@ -405,34 +405,43 @@ const Services = () => {
         )}
       </motion.div>
 
-       {/* Modals */} 
-       {showServiceForm && (
-          <ServiceForm 
-            isOpen={showServiceForm}
-            onClose={() => setShowServiceForm(false)}
-            onSave={handleSaveService}
-            serviceData={currentService}
-            isEditMode={isEditMode}
-            categories={categories}
-            isSubmitting={isSubmitting}
-          />
-       )}
-        {showCategoryForm && (
-          <CategoryForm 
-            isOpen={showCategoryForm} 
-            onClose={() => setShowCategoryForm(false)}
-            onSuccess={handleCategoryFormSuccess}
-          />
-        )}
-        {showDeleteConfirm && (
-          <ConfirmationModal
-            isOpen={showDeleteConfirm}
-            onClose={() => setShowDeleteConfirm(false)}
-            onConfirm={confirmDeleteService}
-            title="Xác nhận xóa dịch vụ"
-            message={`Bạn có chắc chắn muốn xóa dịch vụ "${serviceToDelete?.name}"?`}
-          />
-        )}
+      {/* Modals */}
+      {showServiceForm && (
+        <div className="form-modal-overlay"> {/* Lớp phủ */} 
+          <div className="service-form-modal-content"> {/* Nội dung */} 
+            <ServiceForm
+              isOpen={showServiceForm} // isOpen có thể không cần nữa nếu render có điều kiện
+              onClose={() => setShowServiceForm(false)}
+              onSave={handleSaveService}
+              serviceData={currentService}
+              isEditMode={isEditMode}
+              categories={categories}
+              isSubmitting={isSubmitting}
+            />
+          </div>
+        </div>
+      )}
+      {showCategoryForm && (
+        <div className="form-modal-overlay"> {/* Lớp phủ */} 
+          <div className="category-form-modal-content"> {/* Nội dung */} 
+            <CategoryForm
+              isOpen={showCategoryForm} // isOpen có thể không cần nữa
+              onClose={() => setShowCategoryForm(false)}
+              onSuccess={handleCategoryFormSuccess}
+            />
+          </div>
+        </div>
+      )}
+      {showDeleteConfirm && (
+        // ConfirmationModal được giả định tự quản lý overlay của nó
+        <ConfirmationModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmDeleteService}
+          title="Xác nhận xóa dịch vụ"
+          message={`Bạn có chắc chắn muốn xóa dịch vụ \"${serviceToDelete?.name}\"?`}
+        />
+      )}
     </div>
   )
 }

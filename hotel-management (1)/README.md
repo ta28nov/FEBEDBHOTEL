@@ -19,3 +19,8 @@ npm install
 # Chạy ứng dụng ở môi trường development
 npm run dev
 
+
+
+
+đang thiếu cập nhật trạng thái .
+

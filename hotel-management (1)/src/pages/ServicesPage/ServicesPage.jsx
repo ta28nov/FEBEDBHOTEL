@@ -105,6 +105,26 @@ const services = [
   },
 ]
 
+// --- Bắt đầu Variants giống HomePage (chỉ cần elementVariants) --- 
+const elementVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95, rotateZ: -2 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    transition: { duration: 1.2, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    scale: 0.95,
+    rotateZ: 2,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+// --- Kết thúc Variants giống HomePage ---
+
 const ServicesPage = () => {
   // Cuộn lên đầu trang khi component được tải
   useEffect(() => {
@@ -141,10 +161,11 @@ const ServicesPage = () => {
         <div className="container">
           <motion.div
             className="services-intro"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
           >
             <h2>Experience Luxury at Every Moment</h2>
             <p>
@@ -173,10 +194,11 @@ const ServicesPage = () => {
         <div className="container">
           <motion.div
             className="services-cta"
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
           >
             <h2>Ready to Experience Our Services?</h2>
             <p>Book your stay now and indulge in the luxury and comfort that awaits you.</p>
@@ -194,19 +216,17 @@ const ServicesPage = () => {
 
 // Component cho chi tiết dịch vụ
 const ServiceDetail = ({ service, index }) => {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.3 })
-
   const isEven = index % 2 === 0
 
   return (
     <motion.div
-      ref={ref}
       id={service.id}
       className={`service-detail ${isEven ? "even" : "odd"}`}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.8 }}
+      variants={elementVariants}
+      initial="hidden"
+      whileInView="visible"
+      exit="exit"
+      viewport={{ amount: 0.3 }}
     >
       <div className="service-image">
         <img src={service.image || "/placeholder.svg"} alt={service.title} />

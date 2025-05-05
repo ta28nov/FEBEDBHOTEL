@@ -64,7 +64,7 @@ const AdminLayout = () => {
     <div className="admin-layout">
       <div className={`sidebar ${sidebarMinimized ? "minimized" : "open"}`}>
         <div className="sidebar-header">
-          <h2 style={{ display: sidebarMinimized ? 'none' : 'block' }}>Quản lý</h2>
+          <h2>Quản lý</h2>
           <button className="sidebar-toggle" onClick={toggleSidebar}>
             {sidebarMinimized ? <FaBars /> : <FaTimes />}
           </button>
@@ -74,7 +74,7 @@ const AdminLayout = () => {
           <div className="user-avatar">
             <FaUser />
           </div>
-          <div className="user-info" style={{ display: sidebarMinimized ? 'none' : 'block' }}>
+          <div className="user-info">
             <h3>{currentUser?.name || "Người dùng"}</h3>
             <p>{currentUser?.role === "admin" ? "Quản trị viên" : "Nhân viên"}</p>
           </div>
@@ -139,7 +139,8 @@ const AdminLayout = () => {
 
         <div className="sidebar-footer">
           <button className="logout-button" onClick={handleLogout}>
-            <FaSignOutAlt /> <span style={{ display: sidebarMinimized ? 'none' : 'block' }}>Đăng xuất</span>
+            <FaSignOutAlt />
+            <span>Đăng xuất</span>
           </button>
         </div>
       </div>

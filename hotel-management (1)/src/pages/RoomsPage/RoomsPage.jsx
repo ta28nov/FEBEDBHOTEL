@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from "../../components/Header/Header"
 import Footer from "../../components/Footer/Footer"
 import HeroBanner from "../../components/HeroBanner/HeroBanner"
@@ -83,6 +84,62 @@ const allRooms = [
   },
 ]
 
+// --- Bắt đầu Variants giống HomePage --- 
+// Định nghĩa variants cho các phần tử đơn lẻ và tiêu đề
+const elementVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95, rotateZ: -2 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    transition: { duration: 1.0, ease: "easeOut" }, // Tăng duration lên 1.0s
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    scale: 0.95,
+    rotateZ: 2,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
+// Định nghĩa variants cho các container lưới (để stagger children)
+const gridContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2, // Tăng staggerChildren lên 0.2s
+      duration: 0.2,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
+
+// Định nghĩa variants cho các item bên trong lưới (card)
+const gridItemVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95, rotateZ: -2 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    transition: { duration: 1.0, ease: "easeOut" }, // Tăng duration lên 1.0s
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    scale: 0.95,
+    rotateZ: 2,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+// --- Kết thúc Variants giống HomePage ---
+
 const RoomsPage = () => {
   const [filteredRooms, setFilteredRooms] = useState(allRooms)
   const [filters, setFilters] = useState({
@@ -159,7 +216,13 @@ const RoomsPage = () => {
 
       <section className="section rooms-list-section">
         <div className="container">
-          <div className="rooms-filter">
+          <motion.div
+            className="rooms-filter"
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             <h3>Filter Rooms</h3>
             <div className="filter-form">
               <div className="filter-group">
@@ -198,26 +261,53 @@ const RoomsPage = () => {
                 Reset Filters
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rooms-results">
+          <motion.div
+            className="rooms-results"
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
             <h3>Available Rooms ({filteredRooms.length})</h3>
 
-            {filteredRooms.length > 0 ? (
-              <div className="rooms-grid">
-                {filteredRooms.map((room) => (
-                  <RoomCard key={room.id} room={room} />
-                ))}
-              </div>
-            ) : (
-              <div className="no-rooms-found">
-                <p>No rooms match your current filters. Please try different criteria.</p>
-                <button className="btn btn-primary" onClick={resetFilters}>
-                  Reset Filters
-                </button>
-              </div>
-            )}
-          </div>
+            <AnimatePresence mode="wait">
+              {filteredRooms.length > 0 ? (
+                <motion.div
+                  key="rooms-grid-key"
+                  className="rooms-grid"
+                  variants={gridContainerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  {filteredRooms.map((room) => (
+                    <motion.div
+                      key={room.id}
+                      variants={gridItemVariants}
+                    >
+                      <RoomCard room={room} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="no-rooms-key"
+                  className="no-rooms-found"
+                  variants={elementVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <p>No rooms match your current filters. Please try different criteria.</p>
+                  <button className="btn btn-primary" onClick={resetFilters}>
+                    Reset Filters
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </section>
 

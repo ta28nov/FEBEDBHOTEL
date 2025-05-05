@@ -119,6 +119,60 @@ const testimonials = [
   },
 ]
 
+// Định nghĩa variants cho các phần tử đơn lẻ và tiêu đề
+const elementVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95, rotateZ: -2 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    transition: { duration: 0.8, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    scale: 0.95,
+    rotateZ: 2,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
+// Định nghĩa variants cho các container lưới (để stagger children)
+const gridContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      duration: 0.2,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.5 }
+  }
+};
+
+// Định nghĩa variants cho các item bên trong lưới (card)
+const gridItemVariants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95, rotateZ: -2 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    transition: { duration: 0.8, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    y: -50,
+    scale: 0.95,
+    rotateZ: 2,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
 const HomePage = () => {
   // Cuộn lên đầu trang khi component được tải
   useEffect(() => {
@@ -139,10 +193,11 @@ const HomePage = () => {
         <div className="container">
           <div className="section-title">
             <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               Welcome to Luxury Hotel
             </motion.h2>
@@ -151,10 +206,11 @@ const HomePage = () => {
           <div className="welcome-content">
             <motion.div
               className="welcome-image"
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               <img
                 src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
@@ -164,10 +220,11 @@ const HomePage = () => {
 
             <motion.div
               className="welcome-text"
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               <h3>Experience the Ultimate Luxury</h3>
               <p>
@@ -193,27 +250,38 @@ const HomePage = () => {
         <div className="container">
           <div className="section-title">
             <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               Our Rooms
             </motion.h2>
           </div>
 
-          <div className="rooms-grid">
+          <motion.div
+            className="rooms-grid"
+            variants={gridContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
+          >
             {featuredRooms.map((room, index) => (
-              <RoomCard key={room.id} room={room} />
+              <motion.div key={room.id} variants={gridItemVariants}>
+                <RoomCard room={room} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           <motion.div
             className="view-all-rooms"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
           >
             <a href="/rooms" className="btn btn-primary">
               View All Rooms
@@ -226,20 +294,30 @@ const HomePage = () => {
         <div className="container">
           <div className="section-title">
             <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               Our Services
             </motion.h2>
           </div>
 
-          <div className="services-grid">
+          <motion.div
+            className="services-grid"
+            variants={gridContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
+          >
             {services.map((service, index) => (
-              <ServiceCard key={service.id} service={service} index={index} />
+              <motion.div key={service.id} variants={gridItemVariants}>
+                <ServiceCard service={service} index={index} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -247,20 +325,30 @@ const HomePage = () => {
         <div className="container">
           <div className="section-title">
             <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
+              variants={elementVariants}
+              initial="hidden"
+              whileInView="visible"
+              exit="exit"
+              viewport={{ amount: 0.3 }}
             >
               What Our Guests Say
             </motion.h2>
           </div>
 
-          <div className="testimonials-grid">
+          <motion.div
+            className="testimonials-grid"
+            variants={gridContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
+          >
             {testimonials.map((testimonial, index) => (
-              <TestimonialCard key={testimonial.id} testimonial={testimonial} index={index} />
+              <motion.div key={testimonial.id} variants={gridItemVariants}>
+                <TestimonialCard testimonial={testimonial} index={index} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -268,10 +356,11 @@ const HomePage = () => {
         <div className="container">
           <motion.div
             className="cta-content"
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            variants={elementVariants}
+            initial="hidden"
+            whileInView="visible"
+            exit="exit"
+            viewport={{ amount: 0.3 }}
           >
             <h2>Ready to Experience Luxury?</h2>
             <p>Book your stay now and enjoy exclusive benefits and special offers.</p>
