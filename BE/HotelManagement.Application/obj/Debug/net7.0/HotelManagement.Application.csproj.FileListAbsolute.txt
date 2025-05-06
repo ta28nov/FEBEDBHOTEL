@@ -58,3 +58,19 @@ C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debu
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\refint\HotelManagement.Application.dll
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.pdb
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\ref\HotelManagement.Application.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\bin\Debug\net7.0\HotelManagement.Application.deps.json
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\bin\Debug\net7.0\HotelManagement.Application.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\bin\Debug\net7.0\HotelManagement.Application.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\bin\Debug\net7.0\HotelManagement.Domain.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\bin\Debug\net7.0\HotelManagement.Domain.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.csproj.AssemblyReference.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.AssemblyInfoInputs.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.AssemblyInfo.cs
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.csproj.CoreCompileInputs.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.sourcelink.json
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelMan.6B58BC18.Up2Date
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\refint\HotelManagement.Application.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\HotelManagement.Application.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Application\obj\Debug\net7.0\ref\HotelManagement.Application.dll

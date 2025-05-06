@@ -14,6 +14,7 @@ const BookingDetailModal = ({ bookingId, isOpen, onClose, onDataChange }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   const [availableServices, setAvailableServices] = useState([]);
   const [showAddServiceForm, setShowAddServiceForm] = useState(false);
@@ -105,6 +106,24 @@ const BookingDetailModal = ({ bookingId, isOpen, onClose, onDataChange }) => {
       } finally {
           setActionLoading(false);
       }
+  }
+
+  const handleUpdateStatus = async (newStatus) => {
+    if (!bookingId || !newStatus) return;
+    if (!window.confirm(`Cập nhật trạng thái đặt phòng thành '${BOOKING_STATUS.find(s => s.value === newStatus)?.label || newStatus}'?`)) return;
+    setStatusUpdating(true);
+    try {
+        await bookingService.updateBooking(bookingId, { status: newStatus });
+        toast.success("Cập nhật trạng thái đặt phòng thành công!");
+        onDataChange();
+        const data = await bookingService.getBookingById(bookingId);
+        setBookingDetails(data);
+    } catch (err) {
+        toast.error(err.response?.data?.message || err.message || "Lỗi cập nhật trạng thái đặt phòng.");
+        console.error("Lỗi cập nhật trạng thái:", err.response || err);
+    } finally {
+        setStatusUpdating(false);
+    }
   }
 
   const handleAddServiceSubmit = async (e) => {
@@ -235,6 +254,23 @@ const BookingDetailModal = ({ bookingId, isOpen, onClose, onDataChange }) => {
                         {BOOKING_STATUS.find(s => s.value === bookingDetails.status)?.label || bookingDetails.status}
                     </span>
                  </p>
+                 {/* Dropdown cập nhật trạng thái booking */}
+                 {bookingDetails.status !== 'cancelled' && bookingDetails.status !== 'checked_out' && (
+                   <div className='status-actions'>
+                     <label>Cập nhật trạng thái:</label>
+                     <select
+                       onChange={e => e.target.value && handleUpdateStatus(e.target.value)}
+                       disabled={actionLoading || statusUpdating}
+                       defaultValue=""
+                       className="status-select"
+                     >
+                       <option value="" disabled>Chọn...</option>
+                       {BOOKING_STATUS.filter(s => s.value !== bookingDetails.status && s.value !== 'cancelled' && s.value !== 'checked_out').map(status => (
+                         <option key={status.value} value={status.value}>{status.label}</option>
+                       ))}
+                     </select>
+                   </div>
+                 )}
                  <p>
                     <strong>Thanh toán:</strong>{' '}
                      <span className={`payment-status-badge payment-${bookingDetails.paymentStatus}`}>
@@ -398,4 +434,4 @@ const BookingDetailModal = ({ bookingId, isOpen, onClose, onDataChange }) => {
   );
 };
 
-export default BookingDetailModal; 
+export default BookingDetailModal;

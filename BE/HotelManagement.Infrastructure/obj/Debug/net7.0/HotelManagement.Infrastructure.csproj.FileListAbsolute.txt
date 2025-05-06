@@ -74,3 +74,23 @@ C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\D
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.pdb
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.genruntimeconfig.cache
 C:\Users\Admin\Filehoanchinh\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\ref\HotelManagement.Infrastructure.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Infrastructure.deps.json
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Infrastructure.runtimeconfig.json
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Infrastructure.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Infrastructure.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Application.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Domain.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Domain.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\bin\Debug\net7.0\HotelManagement.Application.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.csproj.AssemblyReference.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.AssemblyInfoInputs.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.AssemblyInfo.cs
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.sourcelink.json
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelMan.3E78A6F6.Up2Date
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\refint\HotelManagement.Infrastructure.dll
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.pdb
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\HotelManagement.Infrastructure.genruntimeconfig.cache
+C:\Lập trình\FEBEDBHOTEL\BE\HotelManagement.Infrastructure\obj\Debug\net7.0\ref\HotelManagement.Infrastructure.dll

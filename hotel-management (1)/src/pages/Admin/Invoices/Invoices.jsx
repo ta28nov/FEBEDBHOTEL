@@ -31,6 +31,7 @@ const Invoices = () => {
     startDate: "",
     endDate: "",
   })
+  const [bookingServices, setBookingServices] = useState({});
 
   // Fetch bookings data (which will be used to generate invoices)
   const fetchBookings = async () => {
@@ -49,6 +50,26 @@ const Invoices = () => {
   useEffect(() => {
     fetchBookings()
   }, [])
+
+  // Lấy dịch vụ cho tất cả booking khi load danh sách
+  useEffect(() => {
+    if (!bookings.length) return;
+    const fetchAllServices = async () => {
+      const servicesMap = {};
+      await Promise.all(
+        bookings.map(async (b) => {
+          try {
+            const services = await bookingService.getBookingServices(b.id);
+            servicesMap[b.id] = services;
+          } catch {
+            servicesMap[b.id] = [];
+          }
+        })
+      );
+      setBookingServices(servicesMap);
+    };
+    fetchAllServices();
+  }, [bookings]);
 
   // Handle invoice filtering
   const handleFilterChange = (e) => {
@@ -150,8 +171,25 @@ const Invoices = () => {
           )
         },
       },
+      {
+        Header: "Dịch vụ đã sử dụng",
+        accessor: "services",
+        Cell: ({ row }) => {
+          const services = bookingServices[row.original.id] || [];
+          if (!services.length) return <span style={{color:'#888'}}>Không có</span>;
+          return (
+            <ul className="used-services-list-invoice">
+              {services.map((s) => (
+                <li key={s.id || s.serviceId}>
+                  {s.serviceName || s.name} {s.quantity ? `(x${s.quantity})` : ''}
+                </li>
+              ))}
+            </ul>
+          );
+        },
+      },
     ],
-    [isUpdatingStatus],
+    [isUpdatingStatus, bookingServices],
   )
 
   // React Table hooks

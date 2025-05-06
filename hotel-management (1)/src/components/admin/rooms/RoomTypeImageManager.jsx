@@ -23,7 +23,8 @@ const RoomTypeImageManager = ({ roomTypeId, roomTypeName, onClose }) => {
   const isFetchingRef = useRef(false); // Ref to track if fetching is in progress
 
   // Use import.meta.env for Vite environment variables
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5093"; // Get base URL for images
+  // Đặt cổng mặc định đúng với server BE đang chạy
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5225"; // Đổi sang cổng 5225
 
   // Fetch images - Updated with ref check
   const fetchImages = async () => {
@@ -140,7 +141,7 @@ const RoomTypeImageManager = ({ roomTypeId, roomTypeName, onClose }) => {
     if (!relativePath) return '' // Handle cases where path might be missing
 
     // 1. Get the base API URL (e.g., http://localhost:5225/api)
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5093"; 
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5225"; // Đổi sang cổng 5225
     
     // 2. Derive the server base URL by removing '/api' (or potential trailing slash)
     // This assumes '/api' is the standard path prefix. Adjust if needed.
@@ -253,4 +254,4 @@ RoomTypeImageManager.propTypes = {
   onClose: PropTypes.func.isRequired,
 }
 
-export default RoomTypeImageManager 
+export default RoomTypeImageManager

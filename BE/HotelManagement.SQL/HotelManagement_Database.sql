@@ -479,22 +479,22 @@ GO
 INSERT INTO Users (Name, Email, PasswordHash, PhoneNumber, Role, CreatedAt)
 VALUES 
 -- Admin users
-('Admin User', 'admin@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456789', 'admin', DATEADD(MONTH, -12, GETUTCDATE())),
-('Nguyễn Quản Lý', 'manager@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456780', 'admin', DATEADD(MONTH, -11, GETUTCDATE())),
+('Tuan Anh', 'tiphong05@gmail.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456789', 'admin', DATEADD(MONTH, -12, GETUTCDATE())),
+('Nguyễn Quản Lý', 'manager@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456780', 'admin', DATEADD(MONTH, -11, GETUTCDATE())),
 
 -- Employee users
-('Employee User', 'employee@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456788', 'employee', DATEADD(MONTH, -10, GETUTCDATE())),
-('Trần Nhân Viên', 'staff1@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456781', 'employee', DATEADD(MONTH, -9, GETUTCDATE())),
-('Lê Thị Lễ Tân', 'receptionist@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456782', 'employee', DATEADD(MONTH, -8, GETUTCDATE())),
-('Phạm Văn Phục Vụ', 'service@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456783', 'employee', DATEADD(MONTH, -7, GETUTCDATE())),
+('Employee User', 'employee@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456788', 'employee', DATEADD(MONTH, -10, GETUTCDATE())),
+('Trần Nhân Viên', 'staff1@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456781', 'employee', DATEADD(MONTH, -9, GETUTCDATE())),
+('Lê Thị Lễ Tân', 'receptionist@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456782', 'employee', DATEADD(MONTH, -8, GETUTCDATE())),
+('Phạm Văn Phục Vụ', 'service@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456783', 'employee', DATEADD(MONTH, -7, GETUTCDATE())),
 
 -- Customer users
-('Customer User', 'customer@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456787', 'customer', DATEADD(MONTH, -6, GETUTCDATE())),
-('John Smith', 'john.smith@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456784', 'customer', DATEADD(MONTH, -5, GETUTCDATE())),
-('Maria Garcia', 'maria.garcia@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456785', 'customer', DATEADD(MONTH, -4, GETUTCDATE())),
-('Nguyễn Văn Khách', 'nguyen.khach@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456786', 'customer', DATEADD(MONTH, -3, GETUTCDATE())),
-('Trần Thị Hàng', 'tran.hang@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456790', 'customer', DATEADD(MONTH, -2, GETUTCDATE())),
-('David Johnson', 'david.johnson@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456791', 'customer', DATEADD(MONTH, -1, GETUTCDATE()));
+('Customer User', 'customer@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456787', 'customer', DATEADD(MONTH, -6, GETUTCDATE())),
+('John Smith', 'john.smith@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456784', 'customer', DATEADD(MONTH, -5, GETUTCDATE())),
+('Maria Garcia', 'maria.garcia@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456785', 'customer', DATEADD(MONTH, -4, GETUTCDATE())),
+('Nguyễn Văn Khách', 'nguyen.khach@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456786', 'customer', DATEADD(MONTH, -3, GETUTCDATE())),
+('Trần Thị Hàng', 'tran.hang@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456790', 'customer', DATEADD(MONTH, -2, GETUTCDATE())),
+('David Johnson', 'david.johnson@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456791', 'customer', DATEADD(MONTH, -1, GETUTCDATE()));
 GO
 
 -- Chèn dữ liệu mẫu cho RoomTypes

@@ -9,6 +9,12 @@ import "./RoomCard.css"
 const RoomCard = ({ room }) => {
   const [isHovered, setIsHovered] = useState(false)
 
+  // Nếu room.amenities không có, fallback về mảng rỗng để tránh lỗi
+  const amenities = Array.isArray(room.amenities) ? room.amenities : [];
+
+  // Lấy specification (thông số) nếu có
+  const specifications = Array.isArray(room.specifications) ? room.specifications : [];
+
   // Hàm hiển thị biểu tượng cho các tiện nghi
   const getAmenityIcon = (amenity) => {
     switch (amenity) {
@@ -53,13 +59,25 @@ const RoomCard = ({ room }) => {
         <p className="room-description">{room.description}</p>
 
         <div className="room-amenities">
-          {room.amenities.slice(0, 4).map((amenity, index) => (
+          {amenities.slice(0, 4).map((amenity, index) => (
             <div key={index} className="amenity" title={amenity.charAt(0).toUpperCase() + amenity.slice(1)}>
               {getAmenityIcon(amenity)}
             </div>
           ))}
-          {room.amenities.length > 4 && <div className="amenity-more">+{room.amenities.length - 4} more</div>}
+          {amenities.length > 4 && <div className="amenity-more">+{amenities.length - 4} more</div>}
         </div>
+
+        {/* Hiển thị thông số (specification) ngắn gọn nếu có */}
+        {specifications.length > 0 && (
+          <div className="room-specifications-short">
+            {specifications.slice(0, 2).map((spec, idx) => (
+              <div key={idx} className="spec-short-item">
+                <span className="spec-label">{spec.name}:</span> <span className="spec-value">{spec.value}</span>
+              </div>
+            ))}
+            {specifications.length > 2 && <span className="spec-more">+{specifications.length - 2} more</span>}
+          </div>
+        )}
 
         <div className="room-actions">
           <Link to={`/rooms/${room.id}`} className="btn btn-secondary">

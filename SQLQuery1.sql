@@ -255,46 +255,31 @@ CREATE TABLE Reviews (
 );
 GO
 
--- Tạo Stored Procedure cho báo cáo doanh thu theo tháng
-CREATE PROCEDURE GetMonthlyRevenueReport
-    @Year INT = NULL
+-- Tạo Stored Procedure cho báo cáo doanh thu theo tháng (Đã sửa để nhận StartDate, EndDate)
+CREATE PROCEDURE GetMonthlyRevenueReport -- Changed back to CREATE
+    @StartDate DATETIME2,
+    @EndDate DATETIME2
 AS
 BEGIN
     SET NOCOUNT ON;
-    
-    IF @Year IS NULL
-        SET @Year = YEAR(GETDATE());
-    
-    WITH ServiceRevenues AS (
-        SELECT 
-            b.Id AS BookingId,
-            SUM(bs.Price * bs.Quantity) AS ServiceRevenue
-        FROM 
-            BookingServices bs
-        JOIN 
-            Bookings b ON bs.BookingId = b.Id
-        WHERE 
-            YEAR(b.CheckOutDate) = @Year
-            AND b.Status = 'checked_out'
-        GROUP BY 
-            b.Id
-    )
-    
-    SELECT 
-        MONTH(b.CheckOutDate) AS Month,
-        SUM(b.TotalAmount) AS Revenue,
-        SUM(ISNULL(sr.ServiceRevenue, 0)) AS Services,
-        COUNT(b.Id) AS BookingsCount
-    FROM 
+
+    -- Logic mới dựa trên StartDate và EndDate
+    SELECT
+        MONTH(b.CreatedAt) AS Month,
+        YEAR(b.CreatedAt) AS Year,
+        SUM(b.TotalAmount) AS TotalRevenue
+    FROM
         Bookings b
-    LEFT JOIN 
-        ServiceRevenues sr ON b.Id = sr.BookingId
-    WHERE 
-        YEAR(b.CheckOutDate) = @Year
-        AND b.Status = 'checked_out'
-    GROUP BY 
-        MONTH(b.CheckOutDate)
-    ORDER BY 
+    WHERE
+        b.Status NOT IN ('cancelled', 'pending')
+        AND b.PaymentStatus IN ('paid', 'partial')
+        AND b.CreatedAt >= @StartDate -- Lọc theo ngày bắt đầu
+        AND b.CreatedAt <= @EndDate   -- Lọc theo ngày kết thúc
+    GROUP BY
+        YEAR(b.CreatedAt),
+        MONTH(b.CreatedAt)
+    ORDER BY
+        Year,
         Month;
 END;
 GO
@@ -323,12 +308,22 @@ BEGIN
         SET @CurrentDate = DATEADD(DAY, 1, @CurrentDate);
     END;
     
+    -- Khai báo và tính toán số phòng có sẵn (Thêm dòng này)
+    DECLARE @TotalAvailableRooms INT;
+    SELECT @TotalAvailableRooms = COUNT(*) FROM Rooms WHERE Status <> 'maintenance';
+    
     -- Tính toán công suất phòng theo ngày
     SELECT 
         d.Date,
         COUNT(DISTINCT b.RoomId) AS OccupiedRooms,
         (SELECT COUNT(*) FROM Rooms) AS TotalRooms,
-        CAST(COUNT(DISTINCT b.RoomId) AS FLOAT) / (SELECT COUNT(*) FROM Rooms) * 100 AS OccupancyRate
+        -- Tính tỷ lệ lấp đầy, tránh chia cho 0
+        CASE
+            WHEN @TotalAvailableRooms > 0 THEN
+                -- Ép kiểu kết quả sang DECIMAL(5, 4) để khớp DTO
+                CAST((COUNT(b.Id) * 1.0 / @TotalAvailableRooms) AS DECIMAL(5, 4))
+            ELSE 0
+        END AS OccupancyRate
     FROM 
         @AllDates d
     LEFT JOIN 
@@ -484,22 +479,22 @@ GO
 INSERT INTO Users (Name, Email, PasswordHash, PhoneNumber, Role, CreatedAt)
 VALUES 
 -- Admin users
-('Admin User', 'admin@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456789', 'admin', DATEADD(MONTH, -12, GETUTCDATE())),
-('Nguyễn Quản Lý', 'manager@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456780', 'admin', DATEADD(MONTH, -11, GETUTCDATE())),
+('Tuan Anh', 'tiphong05@gmail.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456789', 'admin', DATEADD(MONTH, -12, GETUTCDATE())),
+('Nguyễn Quản Lý', 'manager@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456780', 'admin', DATEADD(MONTH, -11, GETUTCDATE())),
 
 -- Employee users
-('Employee User', 'employee@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456788', 'employee', DATEADD(MONTH, -10, GETUTCDATE())),
-('Trần Nhân Viên', 'staff1@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456781', 'employee', DATEADD(MONTH, -9, GETUTCDATE())),
-('Lê Thị Lễ Tân', 'receptionist@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456782', 'employee', DATEADD(MONTH, -8, GETUTCDATE())),
-('Phạm Văn Phục Vụ', 'service@hotel.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456783', 'employee', DATEADD(MONTH, -7, GETUTCDATE())),
+('Employee User', 'employee@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456788', 'employee', DATEADD(MONTH, -10, GETUTCDATE())),
+('Trần Nhân Viên', 'staff1@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456781', 'employee', DATEADD(MONTH, -9, GETUTCDATE())),
+('Lê Thị Lễ Tân', 'receptionist@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456782', 'employee', DATEADD(MONTH, -8, GETUTCDATE())),
+('Phạm Văn Phục Vụ', 'service@hotel.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456783', 'employee', DATEADD(MONTH, -7, GETUTCDATE())),
 
 -- Customer users
-('Customer User', 'customer@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456787', 'customer', DATEADD(MONTH, -6, GETUTCDATE())),
-('John Smith', 'john.smith@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456784', 'customer', DATEADD(MONTH, -5, GETUTCDATE())),
-('Maria Garcia', 'maria.garcia@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456785', 'customer', DATEADD(MONTH, -4, GETUTCDATE())),
-('Nguyễn Văn Khách', 'nguyen.khach@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456786', 'customer', DATEADD(MONTH, -3, GETUTCDATE())),
-('Trần Thị Hàng', 'tran.hang@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456790', 'customer', DATEADD(MONTH, -2, GETUTCDATE())),
-('David Johnson', 'david.johnson@example.com', '$2a$12$1InE4/AkF4P4Kf8Zx7yZ8.TLcC6Y.57BmgRJkEP4Ly0/2wNF0N9Hy', '0123456791', 'customer', DATEADD(MONTH, -1, GETUTCDATE()));
+('Customer User', 'customer@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456787', 'customer', DATEADD(MONTH, -6, GETUTCDATE())),
+('John Smith', 'john.smith@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456784', 'customer', DATEADD(MONTH, -5, GETUTCDATE())),
+('Maria Garcia', 'maria.garcia@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456785', 'customer', DATEADD(MONTH, -4, GETUTCDATE())),
+('Nguyễn Văn Khách', 'nguyen.khach@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456786', 'customer', DATEADD(MONTH, -3, GETUTCDATE())),
+('Trần Thị Hàng', 'tran.hang@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456790', 'customer', DATEADD(MONTH, -2, GETUTCDATE())),
+('David Johnson', 'david.johnson@example.com', '$2a$11$VzZLOhlMnI.NT3kL1GABBuC9SZzWv.IcfwQnYkDBUp/JgMhyPqevy', '0123456791', 'customer', DATEADD(MONTH, -1, GETUTCDATE()));
 GO
 
 -- Chèn dữ liệu mẫu cho RoomTypes
@@ -1424,4 +1419,12 @@ INNER JOIN
 GO
 
 PRINT 'Thấy dòng này là SQL OK rồi =)) '
+GO
+
+-- Vô hiệu hóa trigger TR_Bookings_UpdateRoomStatus
+ALTER TABLE Bookings DISABLE TRIGGER TR_Bookings_UpdateRoomStatus;
+GO
+
+-- Vô hiệu hóa trigger TR_BookingServices_UpdateTotalAmount
+ALTER TABLE BookingServices DISABLE TRIGGER TR_BookingServices_UpdateTotalAmount;
 GO

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "eHZBWWU7E6ARYO0ckzF9SEZRzS314w4OCN/BGCabNxM=",
+  "Hash": "YfshRSwX3GeUX7Rm5bxySvEJyYuKdd1gu+WNZJ9Yx5Q=",
   "Source": "HotelManagement.API",
   "BasePath": "_content/HotelManagement.API",
   "Mode": "Default",
@@ -10,10 +10,49 @@
     {
       "Name": "HotelManagement.API\\wwwroot",
       "Source": "HotelManagement.API",
-      "ContentRoot": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\",
+      "ContentRoot": "C:\\Lập trình\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\",
       "BasePath": "_content/HotelManagement.API",
       "Pattern": "**"
     }
   ],
-  "Assets": []
+  "Assets": [
+    {
+      "Identity": "C:\\Lập trình\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\images\\rooms\\.gitkeep",
+      "SourceId": "HotelManagement.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Lập trình\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\",
+      "BasePath": "_content/HotelManagement.API",
+      "RelativePath": "images/rooms/.gitkeep",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\rooms\\.gitkeep"
+    },
+    {
+      "Identity": "C:\\Lập trình\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\images\\rooms\\room_1_638821372355091716.jpg",
+      "SourceId": "HotelManagement.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Lập trình\\FEBEDBHOTEL\\BE\\HotelManagement.API\\wwwroot\\",
+      "BasePath": "_content/HotelManagement.API",
+      "RelativePath": "images/rooms/room_1_638821372355091716.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\rooms\\room_1_638821372355091716.jpg"
+    }
+  ]
 }
