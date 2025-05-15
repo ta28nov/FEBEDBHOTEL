@@ -6,83 +6,16 @@ import Header from "../../components/Header/Header"
 import Footer from "../../components/Footer/Footer"
 import HeroBanner from "../../components/HeroBanner/HeroBanner"
 import RoomCard from "../../components/RoomCard/RoomCard"
+import roomService from "../../services/roomService"
 import "./RoomsPage.css"
 
-// Dữ liệu mẫu cho phòng
-const allRooms = [
-  {
-    id: 1,
-    name: "Standard Room",
-    description: "A comfortable room with all the essential amenities for a pleasant stay.",
-    price: 150,
-    capacity: 2,
-    type: "standard",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath"],
-  },
-  {
-    id: 2,
-    name: "Deluxe Room",
-    description: "Spacious room with premium furnishings and additional amenities.",
-    price: 250,
-    capacity: 2,
-    type: "deluxe",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar"],
-  },
-  {
-    id: 3,
-    name: "Executive Suite",
-    description: "Luxurious suite with separate living area and exclusive services.",
-    price: 350,
-    capacity: 3,
-    type: "executive",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1591088398332-8a7791972843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "workspace"],
-  },
-  {
-    id: 4,
-    name: "Family Suite",
-    description: "Spacious suite designed for families with connecting rooms.",
-    price: 400,
-    capacity: 4,
-    type: "suite",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "kitchen"],
-  },
-  {
-    id: 5,
-    name: "Presidential Suite",
-    description: "Our most luxurious accommodation with panoramic views and butler service.",
-    price: 800,
-    capacity: 4,
-    type: "suite",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "kitchen", "workspace", "jacuzzi"],
-  },
-  {
-    id: 6,
-    name: "Ocean View Room",
-    description: "Enjoy stunning ocean views from this beautifully appointed room.",
-    price: 300,
-    capacity: 2,
-    type: "deluxe",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1025&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "balcony"],
-  },
-]
+const getImageUrl = (relativePath) => {
+  if (!relativePath) return '';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5225";
+  const serverBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '');
+  const imagePath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+  return `${serverBaseUrl}${imagePath}`;
+}
 
 // --- Bắt đầu Variants giống HomePage --- 
 // Định nghĩa variants cho các phần tử đơn lẻ và tiêu đề
@@ -141,19 +74,106 @@ const gridItemVariants = {
 // --- Kết thúc Variants giống HomePage ---
 
 const RoomsPage = () => {
-  const [filteredRooms, setFilteredRooms] = useState(allRooms)
+  const [rooms, setRooms] = useState([])
+  const [filteredRooms, setFilteredRooms] = useState([])
   const [filters, setFilters] = useState({
     type: "",
     capacity: "",
     priceRange: "",
   })
+  const [loading, setLoading] = useState(true)
 
-  // Cuộn lên đầu trang khi component được tải
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  // Xử lý thay đổi bộ lọc
+  useEffect(() => {
+    const fetchRooms = async () => {
+      setLoading(true)
+      try {
+        // Lấy danh sách phòng
+        const res = await roomService.getAllRooms()
+        const roomsData = Array.isArray(res.data) ? res.data : []
+        // Lấy loại phòng cho từng phòng
+        const roomTypesRes = await roomService.getRoomTypes()
+        const roomTypes = Array.isArray(roomTypesRes.data) ? roomTypesRes.data : []
+        // Map loại phòng theo id
+        const roomTypeMap = {}
+        roomTypes.forEach(rt => { roomTypeMap[rt.id] = rt })
+        // Lấy ảnh chính cho từng loại phòng
+        const roomsWithImages = await Promise.all(
+          roomsData.map(async (room) => {
+            const roomType = roomTypeMap[room.roomTypeId] || {}
+            let image = ""
+            try {
+              const imagesRes = await roomService.getRoomTypeImages(room.roomTypeId)
+              const images = Array.isArray(imagesRes.data) ? imagesRes.data : []
+              const primary = images.find(img => img.isPrimary) || images[0]
+              if (primary) image = getImageUrl(primary.value)
+            } catch {}
+            // Lấy features từ roomType
+            const features = Array.isArray(roomType.features) ? roomType.features : [];
+            const amenities = features.filter(f => f.featureType === "amenity").map(f => f.name || f.value || "");
+            const specifications = features.filter(f => f.featureType === "specification");
+            return {
+              id: room.id,
+              name: roomType.name || room.roomTypeName || "Room",
+              description: roomType.description || "",
+              price: roomType.basePrice || 0,
+              capacity: roomType.capacity || 1,
+              type: roomType.name ? roomType.name.toLowerCase() : "",
+              status: room.status,
+              image,
+              amenities,
+              specifications,
+            }
+          })
+        )
+        setRooms(roomsWithImages)
+        setFilteredRooms(roomsWithImages)
+      } catch (err) {
+        setRooms([])
+        setFilteredRooms([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRooms()
+  }, [])
+
+  useEffect(() => {
+    let result = rooms
+    if (filters.type) {
+      result = result.filter((room) => room.type === filters.type)
+    }
+    if (filters.capacity) {
+      const capacity = Number.parseInt(filters.capacity)
+      result = result.filter((room) => room.capacity >= capacity)
+    }
+    if (filters.priceRange) {
+      switch (filters.priceRange) {
+        case "under500k":
+          result = result.filter((room) => room.price < 500000);
+          break;
+        case "500k-1m":
+          result = result.filter((room) => room.price >= 500000 && room.price <= 1000000);
+          break;
+        case "1m-1.5m":
+          result = result.filter((room) => room.price > 1000000 && room.price <= 1500000);
+          break;
+        case "1.5m-2m":
+          result = result.filter((room) => room.price > 1500000 && room.price <= 2000000);
+          break;
+        case "over2m":
+          result = result.filter((room) => room.price > 2000000);
+          break;
+        default:
+          break;
+      }
+    }
+    setFilteredRooms(result)
+  }, [filters, rooms])
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target
     setFilters((prev) => ({
@@ -162,39 +182,6 @@ const RoomsPage = () => {
     }))
   }
 
-  // Áp dụng bộ lọc
-  useEffect(() => {
-    let result = allRooms
-
-    if (filters.type) {
-      result = result.filter((room) => room.type === filters.type)
-    }
-
-    if (filters.capacity) {
-      const capacity = Number.parseInt(filters.capacity)
-      result = result.filter((room) => room.capacity >= capacity)
-    }
-
-    if (filters.priceRange) {
-      switch (filters.priceRange) {
-        case "budget":
-          result = result.filter((room) => room.price >= 100 && room.price <= 200)
-          break
-        case "moderate":
-          result = result.filter((room) => room.price > 200 && room.price <= 350)
-          break
-        case "luxury":
-          result = result.filter((room) => room.price > 350)
-          break
-        default:
-          break
-      }
-    }
-
-    setFilteredRooms(result)
-  }, [filters])
-
-  // Xử lý đặt lại bộ lọc
   const resetFilters = () => {
     setFilters({
       type: "",
@@ -231,8 +218,12 @@ const RoomsPage = () => {
                   <option value="">All Types</option>
                   <option value="standard">Standard</option>
                   <option value="deluxe">Deluxe</option>
-                  <option value="executive">Executive</option>
                   <option value="suite">Suite</option>
+                  <option value="family">Family</option>
+                  <option value="executive">Executive</option>
+                  <option value="presidential">Presidential</option>
+                  <option value="single">Single</option>
+                  <option value="twin">Twin</option>
                 </select>
               </div>
 
@@ -251,9 +242,11 @@ const RoomsPage = () => {
                 <label htmlFor="priceRange">Price Range</label>
                 <select id="priceRange" name="priceRange" value={filters.priceRange} onChange={handleFilterChange}>
                   <option value="">Any Price</option>
-                  <option value="budget">Budget ($100-$200)</option>
-                  <option value="moderate">Moderate ($200-$350)</option>
-                  <option value="luxury">Luxury ($350+)</option>
+                  <option value="under500k">Dưới 500.000đ</option>
+                  <option value="500k-1m">500.000đ - 1.000.000đ</option>
+                  <option value="1m-1.5m">1.000.000đ - 1.500.000đ</option>
+                  <option value="1.5m-2m">1.500.000đ - 2.000.000đ</option>
+                  <option value="over2m">Trên 2.000.000đ</option>
                 </select>
               </div>
 

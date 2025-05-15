@@ -1,281 +1,374 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useLocation } from "react-router-dom"
-import { motion } from "framer-motion"
-import { format } from "date-fns"
-import Header from "../../components/Header/Header"
-import Footer from "../../components/Footer/Footer"
-import "./BookingPage.css"
+import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { format, differenceInCalendarDays, isValid, parseISO } from 'date-fns'
+import { toast } from 'react-toastify'
+import { FaCheckCircle } from 'react-icons/fa'
+import Header from '../../components/Header/Header'
+import Footer from '../../components/Footer/Footer'
+import roomEndpoints from '../../api/endpoints/roomEndpoints'
+import bookingEndpoints from '../../api/endpoints/bookingEndpoints'
+import { TOKEN_KEY, USER_KEY } from '../../config/constants'
+import './BookingPage.css'
 
-// Dữ liệu mẫu cho phòng
-const allRooms = [
-  {
-    id: 1,
-    name: "Standard Room",
-    description: "A comfortable room with all the essential amenities for a pleasant stay.",
-    price: 150,
-    capacity: 2,
-    type: "standard",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath"],
-  },
-  {
-    id: 2,
-    name: "Deluxe Room",
-    description: "Spacious room with premium furnishings and additional amenities.",
-    price: 250,
-    capacity: 2,
-    type: "deluxe",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar"],
-  },
-  {
-    id: 3,
-    name: "Executive Suite",
-    description: "Luxurious suite with separate living area and exclusive services.",
-    price: 350,
-    capacity: 3,
-    type: "executive",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1591088398332-8a7791972843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "workspace"],
-  },
-  {
-    id: 4,
-    name: "Family Suite",
-    description: "Spacious suite designed for families with connecting rooms.",
-    price: 400,
-    capacity: 4,
-    type: "suite",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    amenities: ["wifi", "tv", "coffee", "bath", "minibar", "kitchen"],
-  },
-]
+// Hàm tiện ích để tạo URL đầy đủ cho ảnh
+const getImageUrl = (relativePath) => {
+  if (!relativePath) return '';
+  // Giả sử VITE_API_URL được định nghĩa trong .env và trỏ đến base của API (ví dụ http://localhost:5225/api)
+  // Hoặc nếu không có, dùng giá trị mặc định.
+  const apiServiceBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5225/api";
+  // Loại bỏ phần /api để lấy gốc của server backend nơi chứa ảnh
+  const serverRootUrl = apiServiceBaseUrl.replace(/\/api\/?$/, '');
+  const imagePath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+  return `${serverRootUrl}${imagePath}`;
+};
 
 const BookingPage = () => {
+  const navigate = useNavigate()
   const location = useLocation()
-  const queryParams = new URLSearchParams(location.search)
-  const roomId = queryParams.get("room")
 
+  const [initialRoomInfo, setInitialRoomInfo] = useState(null)
+  const [allRooms, setAllRooms] = useState([])
+  const [availableRoomsLoading, setAvailableRoomsLoading] = useState(false)
+  const [availableRoomsError, setAvailableRoomsError] = useState(null)
   const [selectedRoom, setSelectedRoom] = useState(null)
-  const [checkInDate, setCheckInDate] = useState("")
-  const [checkOutDate, setCheckOutDate] = useState("")
-  const [guests, setGuests] = useState(1)
+
+  const queryParams = new URLSearchParams(location.search)
+  const queryCheckIn = queryParams.get("checkIn")
+  const queryCheckOut = queryParams.get("checkOut")
+  const queryRoomId = queryParams.get("roomId")
+  const queryGuests = queryParams.get("guests")
+
+  const [checkInDate, setCheckInDate] = useState(
+    queryCheckIn && isValid(parseISO(queryCheckIn)) ? format(parseISO(queryCheckIn), "yyyy-MM-dd") : ""
+  )
+  const [checkOutDate, setCheckOutDate] = useState(
+    queryCheckOut && isValid(parseISO(queryCheckOut)) ? format(parseISO(queryCheckOut), "yyyy-MM-dd") : ""
+  )
+  const [guests, setGuests] = useState(queryGuests ? parseInt(queryGuests, 10) : 1)
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
     specialRequests: "",
-    paymentMethod: "credit-card",
+    paymentMethod: "PayAtHotel",
   })
-  const [currentStep, setCurrentStep] = useState(1)
-  const [bookingComplete, setBookingComplete] = useState(false)
-  const [bookingReference, setBookingReference] = useState("")
+
   const [errors, setErrors] = useState({})
+  const [bookingComplete, setBookingComplete] = useState(false)
+  const [bookingDetails, setBookingDetails] = useState(null) // Will hold BookingDto after successful booking
 
-  // Cuộn lên đầu trang khi component được tải
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
-  // Tìm phòng dựa trên ID từ query params
-  useEffect(() => {
-    if (roomId) {
-      const room = allRooms.find((r) => r.id === Number.parseInt(roomId))
-      if (room) {
-        setSelectedRoom(room)
-        setGuests(room.capacity > 1 ? 2 : 1)
+    const fetchInitialRoomDetails = async () => {
+      if (queryRoomId) {
+        try {
+          const res = await roomEndpoints.getRoomById(queryRoomId)
+          if (res.data) {
+            console.log("[BookingPage] Initial room details fetched:", res.data);
+            setInitialRoomInfo(res.data)
+          }
+        } catch (error) {
+          console.error("Error fetching initial room details:", error)
+          toast.error("Could not load details for the pre-selected room.")
+        }
       }
     }
-  }, [roomId])
+    fetchInitialRoomDetails()
+  }, [queryRoomId])
 
-  // Xử lý thay đổi input
+  useEffect(() => {
+    const fetchAvailableRooms = async () => {
+      console.log("[BookingPage] Attempting to fetch available rooms. Dates:", { checkInDate, checkOutDate });
+
+      if (checkInDate && checkOutDate && isValid(parseISO(checkInDate)) && isValid(parseISO(checkOutDate))) {
+        const startDate = parseISO(checkInDate)
+        const endDate = parseISO(checkOutDate)
+
+        console.log("[BookingPage] Parsed dates:", { startDate, endDate });
+
+        if (differenceInCalendarDays(endDate, startDate) <= 0) {
+          console.log("[BookingPage] Invalid date range: Check-out must be after check-in.");
+          setAllRooms([])
+          setSelectedRoom(null)
+          if (checkInDate && checkOutDate) { 
+             toast.error("Check-out date must be after check-in date.")
+          }
+          return
+        }
+
+        setAvailableRoomsLoading(true)
+        setAvailableRoomsError(null)
+        console.log("[BookingPage] Resetting allRooms and selectedRoom before API call.");
+        setAllRooms([])
+        setSelectedRoom(null) 
+
+        try {
+          const params = {
+            checkIn: startDate.toISOString(),
+            checkOut: endDate.toISOString(),
+          }
+          console.log("[BookingPage] Calling roomEndpoints.checkAvailability with params:", params);
+          
+          const response = await roomEndpoints.checkAvailability(params)
+          
+          console.log("[BookingPage] Response from roomEndpoints.checkAvailability:", response);
+          
+          const fetchedRooms = response.data || [];
+          setAllRooms(fetchedRooms);
+          console.log("[BookingPage] Updated allRooms state with (count: " + fetchedRooms.length + "):", fetchedRooms);
+
+          if (initialRoomInfo && fetchedRooms.some(room => room.id === initialRoomInfo.id)) {
+            console.log("[BookingPage] Initial room info present and found in available rooms. Attempting to pre-select.", initialRoomInfo);
+            const roomCapacity = initialRoomInfo.capacity || 1
+            if (queryGuests && parseInt(queryGuests, 10) <= roomCapacity) {
+              setSelectedRoom(initialRoomInfo)
+              console.log("[BookingPage] Pre-selected initial room based on queryGuests.");
+            } else if (!queryGuests && 1 <= roomCapacity) {
+              setSelectedRoom(initialRoomInfo)
+              console.log("[BookingPage] Pre-selected initial room with default guest count.");
+            }
+          }
+
+        } catch (error) {
+          console.error("[BookingPage] Error fetching available rooms API:", error.response || error.message || error);
+          setAvailableRoomsError("Could not fetch available rooms. Please try different dates or contact support.")
+          toast.error("Could not fetch available rooms. Ensure dates are valid.")
+        } finally {
+          setAvailableRoomsLoading(false)
+          console.log("[BookingPage] Finished fetching available rooms. Loading set to false.");
+        }
+      } else {
+        console.log("[BookingPage] Check-in or Check-out date is missing or invalid. Clearing rooms list.");
+        setAllRooms([])
+        setSelectedRoom(null)
+      }
+    }
+
+    fetchAvailableRooms()
+  }, [checkInDate, checkOutDate, initialRoomInfo, queryGuests])
+
+  const handleRoomSelect = (room) => {
+    setSelectedRoom(room)
+    const roomCapacity = room.capacity || 1
+    if (guests > roomCapacity) {
+      setGuests(roomCapacity)
+    }
+    if (guests < 1) {
+      setGuests(1)
+    }
+  }
+
+  const numberOfNights = useCallback(() => {
+    if (checkInDate && checkOutDate) {
+      const start = parseISO(checkInDate)
+      const end = parseISO(checkOutDate)
+      if (isValid(start) && isValid(end)) {
+        const diff = differenceInCalendarDays(end, start)
+        return diff > 0 ? diff : 0
+      }
+    }
+    return 0
+  }, [checkInDate, checkOutDate])
+
+  const roomTotal = selectedRoom && numberOfNights() > 0 ? selectedRoom.basePrice * numberOfNights() : 0
+  const taxRate = 0.12
+  const tax = roomTotal * taxRate
+  const grandTotal = roomTotal + tax
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-
-    // Xóa lỗi khi người dùng nhập lại
+    setFormData((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+      setErrors((prev) => ({ ...prev, [name]: null }))
     }
   }
 
-  // Xử lý thay đổi phòng
-  const handleRoomChange = (e) => {
-    const roomId = Number.parseInt(e.target.value)
-    const room = allRooms.find((r) => r.id === roomId)
-    setSelectedRoom(room)
-    setGuests(room.capacity > 1 ? 2 : 1)
-  }
-
-  // Xác thực form
-  const validateForm = () => {
+  const validateBookingForm = () => {
     const newErrors = {}
-
-    if (currentStep === 1) {
-      if (!selectedRoom) {
-        newErrors.room = "Please select a room"
-      }
-      if (!checkInDate) {
-        newErrors.checkIn = "Please select a check-in date"
-      }
-      if (!checkOutDate) {
-        newErrors.checkOut = "Please select a check-out date"
-      } else if (new Date(checkInDate) >= new Date(checkOutDate)) {
-        newErrors.checkOut = "Check-out date must be after check-in date"
-      }
-    } else if (currentStep === 2) {
-      if (!formData.firstName.trim()) {
-        newErrors.firstName = "First name is required"
-      }
-      if (!formData.lastName.trim()) {
-        newErrors.lastName = "Last name is required"
-      }
-      if (!formData.email.trim()) {
-        newErrors.email = "Email is required"
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        newErrors.email = "Email is invalid"
-      }
-      if (!formData.phone.trim()) {
-        newErrors.phone = "Phone number is required"
-      }
+    if (!selectedRoom) {
+      newErrors.room = "Please select a room from the list."
+      toast.warn("Please select a room.")
+    }
+    if (!checkInDate || !checkOutDate || numberOfNights() <= 0) {
+        newErrors.dates = "Please select valid check-in and check-out dates."
+        toast.warn("Please select valid check-in and check-out dates.")
+    }
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid"
+    }
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
+    else if (!/^\d{10,}$/.test(formData.phone.replace(/\s/g, ''))) {
+        newErrors.phone = "Phone number must be at least 10 digits"
+    }
+    if (guests < 1) newErrors.guests = "Number of guests must be at least 1."
+    if (selectedRoom && guests > selectedRoom.capacity) {
+        newErrors.guests = `This room can only accommodate up to ${selectedRoom.capacity} guests.`;
+        toast.warn(`Selected room capacity is ${selectedRoom.capacity}. Please adjust guest count.`)
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  // Xử lý chuyển bước
-  const handleNextStep = () => {
-    if (validateForm()) {
-      setCurrentStep(currentStep + 1)
-      window.scrollTo(0, 0)
+  const handleCompleteBooking = async () => {
+    if (!validateBookingForm()) {
+      toast.error("Please correct the errors in the form.")
+      return
     }
-  }
 
-  const handlePrevStep = () => {
-    setCurrentStep(currentStep - 1)
-    window.scrollTo(0, 0)
-  }
+    let customerIdToUse = null 
+    const token = localStorage.getItem(TOKEN_KEY) 
+    const storedUser = localStorage.getItem(USER_KEY) 
 
-  // Xử lý hoàn tất đặt phòng
-  const handleCompleteBooking = () => {
-    if (validateForm()) {
-      // Mô phỏng API call
-      setTimeout(() => {
-        // Tạo mã tham chiếu ngẫu nhiên
-        const reference = "BK" + Math.floor(100000 + Math.random() * 900000)
-        setBookingReference(reference)
+    console.log("[BookingPage] Attempting to get customer ID. Token Key Used:", TOKEN_KEY, "User Key Used:", USER_KEY);
+    console.log("[BookingPage] Token from localStorage:", token ? "Exists" : "Not Found");
+    console.log("[BookingPage] Stored user string from localStorage:", storedUser);
+
+    if (token && storedUser) {
+        try {
+            const parsedUser = JSON.parse(storedUser)
+            console.log("[BookingPage] Parsed user object:", parsedUser);
+            if(parsedUser && typeof parsedUser.id !== 'undefined') {
+                customerIdToUse = parsedUser.id 
+                console.log("[BookingPage] Customer ID found:", customerIdToUse);
+            } else {
+                console.warn("[BookingPage] Parsed user object does not contain a valid 'id' property.", parsedUser);
+            }
+        } catch (e) {
+            console.error("[BookingPage] Error parsing user from localStorage:", e);
+            toast.error("Error processing user information. Please try logging out and in again.")
+            return
+        }
+    } else {
+        console.warn("[BookingPage] Token or stored user not found in localStorage using provided keys.");
+    }
+    
+    if (!customerIdToUse) {
+        toast.error("You must be logged in to complete a booking. Please log in and try again.")
+        console.log("[BookingPage] Customer ID not resolved. Booking aborted.");
+        return
+    }
+
+    const bookingPayload = {
+      CustomerId: customerIdToUse,
+      RoomId: selectedRoom.id, 
+      CheckInDate: parseISO(checkInDate).toISOString(),
+      CheckOutDate: parseISO(checkOutDate).toISOString(),
+      Adults: guests, 
+      Children: 0, 
+      TotalAmount: grandTotal, 
+      Notes: formData.specialRequests,
+    }
+    console.log("[BookingPage] Booking payload prepared:", bookingPayload);
+
+    try {
+      const response = await bookingEndpoints.createBooking(bookingPayload)
+      if (response.data && response.data.bookingId) {
+        toast.success(response.data.message || "Booking created successfully! Fetching details...")
+        const detailsResponse = await bookingEndpoints.getBookingById(response.data.bookingId)
+        setBookingDetails(detailsResponse.data) 
         setBookingComplete(true)
         window.scrollTo(0, 0)
-      }, 1500)
+      } else {
+        toast.error("Failed to create booking. Unexpected response from server.")
+        console.error("Unexpected booking creation response:", response)
+      }
+    } catch (error) {
+      console.error("Error creating booking:", error)
+      toast.error(error.response?.data?.message || error.response?.data?.error || "An error occurred while creating your booking. Please try again.")
     }
   }
 
-  // Tính số đêm và tổng giá
-  const calculateNights = () => {
-    if (!checkInDate || !checkOutDate) return 0
-
-    const checkIn = new Date(checkInDate)
-    const checkOut = new Date(checkOutDate)
-    const diffTime = Math.abs(checkOut - checkIn)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    return diffDays
-  }
-
-  const calculateTotal = () => {
-    if (!selectedRoom) return 0
-
-    const nights = calculateNights()
-    const roomTotal = selectedRoom.price * nights
-    const tax = roomTotal * 0.12 // 12% tax
-
-    return {
-      roomTotal,
-      tax,
-      grandTotal: roomTotal + tax,
-    }
-  }
-
-  const { roomTotal, tax, grandTotal } = calculateTotal()
-
-  // Hiển thị trang hoàn tất đặt phòng
-  if (bookingComplete) {
+  if (bookingComplete && bookingDetails) {
     return (
-      <div className="booking-page">
+      <div className="booking-page booking-page-complete">
         <Header />
-
         <div className="booking-container">
           <div className="container">
             <motion.div
-              className="booking-complete"
+              className="booking-complete-card"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="booking-complete-icon">✓</div>
+              <div className="booking-complete-icon"><FaCheckCircle /></div>
               <h2>Booking Confirmed!</h2>
-              <p>Thank you for your reservation. We look forward to welcoming you to our hotel.</p>
+              <p>Thank you for your reservation. We look forward to welcoming you.</p>
 
-              <div className="booking-details">
-                <h3>Booking Details</h3>
+              <div className="booking-summary-details">
+                <h3>Booking Summary</h3>
                 <div className="detail-row">
-                  <span className="detail-label">Booking Reference:</span>
-                  <span className="detail-value">{bookingReference}</span>
+                  <span className="detail-label">Booking ID:</span>
+                  <span className="detail-value">{bookingDetails.Id || bookingDetails.id || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Room:</span>
-                  <span className="detail-value">{selectedRoom.name}</span>
+                  <span className="detail-value">{bookingDetails.RoomTypeName || selectedRoom?.roomTypeName || 'N/A'}</span>
+                </div>
+                 <div className="detail-row">
+                  <span className="detail-label">Room Number:</span>
+                  <span className="detail-value">{bookingDetails.RoomNumber || selectedRoom?.roomNumber || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Check-in:</span>
-                  <span className="detail-value">{format(new Date(checkInDate), "MMMM dd, yyyy")}</span>
+                  <span className="detail-value">{format(parseISO(bookingDetails.CheckInDate), "MMMM dd, yyyy, HH:mm")}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Check-out:</span>
-                  <span className="detail-value">{format(new Date(checkOutDate), "MMMM dd, yyyy")}</span>
+                  <span className="detail-value">{format(parseISO(bookingDetails.CheckOutDate), "MMMM dd, yyyy, HH:mm")}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Guests:</span>
-                  <span className="detail-value">{guests}</span>
+                  <span className="detail-value">{bookingDetails.Adults}{bookingDetails.Children > 0 ? ` & ${bookingDetails.Children} Children` : ''}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Total Amount:</span>
-                  <span className="detail-value">${grandTotal.toFixed(2)}</span>
+                  <span className="detail-label">Booked For:</span>
+                  <span className="detail-value">{bookingDetails.CustomerName || `${formData.firstName} ${formData.lastName}`}</span>
                 </div>
+                 <div className="detail-row">
+                  <span className="detail-label">Email:</span>
+                  <span className="detail-value">{bookingDetails.CustomerEmail || formData.email}</span>
+                </div>
+                <div className="detail-row total-amount-row">
+                  <span className="detail-label">Total Amount:</span>
+                  <span className="detail-value">${bookingDetails.TotalAmount?.toFixed(2) || 'N/A'}</span>
+                </div>
+                 <div className="detail-row">
+                  <span className="detail-label">Status:</span>
+                  <span className="detail-value">{bookingDetails.Status || 'N/A'}</span>
+                </div>
+                {bookingDetails.Notes && (
+                    <div className="detail-row">
+                        <span className="detail-label">Your Notes:</span>
+                        <span className="detail-value">{bookingDetails.Notes}</span>
+                    </div>
+                )}
               </div>
 
               <p className="booking-note">
-                A confirmation email has been sent to {formData.email}. If you have any questions, please contact our
-                customer service.
+                A confirmation email (if applicable) might be sent to {bookingDetails.CustomerEmail || formData.email}. Please check your spam folder.
+                For any questions, please contact our customer service with your Booking ID.
               </p>
 
               <div className="booking-actions">
-                <a href="/" className="btn btn-primary">
+                <button onClick={() => navigate("/")} className="btn btn-primary">
                   Return to Homepage
-                </a>
+                </button>
+                <button onClick={() => navigate("/my-bookings")} className="btn btn-secondary">
+                  View My Bookings
+                </button>
               </div>
             </motion.div>
           </div>
         </div>
-
         <Footer />
       </div>
     )
@@ -284,348 +377,181 @@ const BookingPage = () => {
   return (
     <div className="booking-page">
       <Header />
-
-      <div className="booking-container">
-        <div className="container">
-          <h1 className="booking-title">Book Your Stay</h1>
-
-          <div className="booking-progress">
-            <div className={`progress-step ${currentStep >= 1 ? "active" : ""}`}>
-              <div className="step-number">1</div>
-              <div className="step-label">Room & Dates</div>
+      <div className="booking-container-new-layout">
+        <h1 className="booking-main-title">Book Your Stay</h1>
+        <div className="booking-content-wrapper">
+          <div className="booking-left-column">
+            <div className="booking-filters-card">
+              <h2>Find Your Room</h2>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="checkIn">Check-in Date</label>
+                  <input
+                    type="date"
+                    id="checkIn"
+                    value={checkInDate}
+                    onChange={(e) => setCheckInDate(e.target.value)}
+                    min={format(new Date(), "yyyy-MM-dd")}
+                    className={errors.dates ? "error" : ""}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="checkOut">Check-out Date</label>
+                  <input
+                    type="date"
+                    id="checkOut"
+                    value={checkOutDate}
+                    onChange={(e) => setCheckOutDate(e.target.value)}
+                    min={checkInDate || format(new Date(), "yyyy-MM-dd")}
+                    className={errors.dates ? "error" : ""}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="guests-filter">Number of Guests</label>
+                <input 
+                    type="number"
+                    id="guests-filter"
+                    value={guests}
+                    onChange={(e) => {
+                        const val = parseInt(e.target.value, 10)
+                        setGuests(val > 0 ? val : 1)
+                    }}
+                    min="1"
+                    max="10" 
+                    className={errors.guests ? "error" : ""}
+                />
+              </div>
+               {errors.dates && <div className="error-message">{errors.dates}</div>}
             </div>
-            <div className="progress-line"></div>
-            <div className={`progress-step ${currentStep >= 2 ? "active" : ""}`}>
-              <div className="step-number">2</div>
-              <div className="step-label">Guest Details</div>
-            </div>
-            <div className="progress-line"></div>
-            <div className={`progress-step ${currentStep >= 3 ? "active" : ""}`}>
-              <div className="step-number">3</div>
-              <div className="step-label">Confirmation</div>
+
+            <div className="available-rooms-list-card">
+              <h2>Available Rooms ({allRooms.length})</h2>
+              {availableRoomsLoading && <p className="loading-text">Loading rooms...</p>}
+              {availableRoomsError && <p className="error-message">{availableRoomsError}</p>}
+              {!availableRoomsLoading && !availableRoomsError && allRooms.length === 0 && (checkInDate && checkOutDate) && (
+                <p className="info-text">No rooms available for the selected dates/criteria. Please try different dates.</p>
+              )}
+              {!availableRoomsLoading && !availableRoomsError && allRooms.length === 0 && !(checkInDate && checkOutDate) && (
+                <p className="info-text">Please select check-in and check-out dates to see available rooms.</p>
+              )}
+              <div className="rooms-scrollable-list">
+                {(() => {
+                  console.log("[BookingPage] Guests value before filtering:", guests);
+                  const filteredRooms = allRooms.filter(room => room.capacity >= guests);
+                  console.log("[BookingPage] Filtered rooms (count: " + filteredRooms.length + "):", filteredRooms);
+                  if (filteredRooms.length === 0 && allRooms.length > 0) {
+                    console.warn("[BookingPage] No rooms match the filter criteria. Guests:", guests, "All rooms capacity data:", allRooms.map(r => ({id: r.id, capacity: r.capacity })));
+                  }
+                  return filteredRooms.map((room) => (
+                  <div 
+                    key={room.id}
+                    className={`room-list-item ${selectedRoom?.id === room.id ? 'selected' : ''}`}
+                    onClick={() => handleRoomSelect(room)}
+                  >
+                    {room.images && room.images.length > 0 ? (
+                        <img 
+                            src={getImageUrl(room.images.find(img => img.isPrimary)?.url || room.images[0]?.url)} 
+                            alt={room.roomTypeName} 
+                            className="room-item-image" 
+                        />
+                    ) : (
+                        <div className="room-item-image-placeholder">No Image</div>
+                    )}
+                    <div className="room-item-details">
+                        <h4>{room.roomTypeName} (Floor: {room.floor})</h4>
+                        <p>Room Number: {room.roomNumber}</p>
+                        <p>Capacity: {room.capacity} guests</p>
+                        <p className="room-item-price">${room.basePrice?.toFixed(2)} / night</p>
+                    </div>
+                  </div>
+                ))})()}
+              </div>
             </div>
           </div>
 
-          <div className="booking-form-container">
-            {currentStep === 1 && (
-              <motion.div
-                className="booking-step"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2>Select Room & Dates</h2>
-
-                <div className="form-group">
-                  <label htmlFor="room">Select Room Type</label>
-                  <select
-                    id="room"
-                    value={selectedRoom ? selectedRoom.id : ""}
-                    onChange={handleRoomChange}
-                    className={errors.room ? "error" : ""}
-                  >
-                    <option value="">-- Select a Room --</option>
-                    {allRooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name} - ${room.price}/night
-                      </option>
-                    ))}
-                  </select>
-                  {errors.room && <div className="error-message">{errors.room}</div>}
+          <div className="booking-right-column">
+            <div className="booking-form-card">
+              <h2>Your Booking Details</h2>
+              {selectedRoom ? (
+                <div className="selected-room-summary">
+                  <h3>{selectedRoom.roomTypeName}</h3>
+                  <p>Room: {selectedRoom.roomNumber} | Floor: {selectedRoom.floor}</p>
+                  <p>Price per night: ${selectedRoom.basePrice?.toFixed(2)}</p>
+                  <p>Nights: {numberOfNights()}</p>
+                  <p>Capacity: {selectedRoom.capacity} guests</p>
+                  {selectedRoom.features && selectedRoom.features.length > 0 && (
+                    <div>
+                        <strong>Features:</strong>
+                        <ul>
+                            {selectedRoom.features.map(f => <li key={f.id}>{f.name}{f.value ? `: ${f.value}` : ''}</li>)}
+                        </ul>
+                    </div>
+                  )}
+                  <hr />
+                  <h4>Total Estimate: ${grandTotal.toFixed(2)}</h4>
+                  <p className="tax-note">(Includes ${tax.toFixed(2)} tax)</p>
+                  <hr />
                 </div>
+              ) : (
+                <p className="info-text">Please select a room from the list on the left.</p>
+              )}
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="checkIn">Check-in Date</label>
-                    <input
-                      type="date"
-                      id="checkIn"
-                      value={checkInDate}
-                      onChange={(e) => setCheckInDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className={errors.checkIn ? "error" : ""}
-                    />
-                    {errors.checkIn && <div className="error-message">{errors.checkIn}</div>}
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="checkOut">Check-out Date</label>
-                    <input
-                      type="date"
-                      id="checkOut"
-                      value={checkOutDate}
-                      onChange={(e) => setCheckOutDate(e.target.value)}
-                      min={checkInDate || new Date().toISOString().split("T")[0]}
-                      className={errors.checkOut ? "error" : ""}
-                    />
-                    {errors.checkOut && <div className="error-message">{errors.checkOut}</div>}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="guests">Number of Guests</label>
-                  <select
-                    id="guests"
-                    value={guests}
-                    onChange={(e) => setGuests(Number.parseInt(e.target.value))}
-                    disabled={!selectedRoom}
-                  >
-                    {selectedRoom &&
-                      [...Array(selectedRoom.capacity)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1} {i === 0 ? "Guest" : "Guests"}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="btn btn-primary" onClick={handleNextStep}>
-                    Continue to Guest Details
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {currentStep === 2 && (
-              <motion.div
-                className="booking-step"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2>Guest Details</h2>
-
-                <div className="form-row">
-                  <div className="form-group">
+              <form onSubmit={(e) => { e.preventDefault(); handleCompleteBooking(); }}>
+                <h3>Guest Information</h3>
+                 <div className="form-row">
+                    <div className="form-group">
                     <label htmlFor="firstName">First Name</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className={errors.firstName ? "error" : ""}
-                    />
+                    <input type="text" id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} className={errors.firstName ? "error" : ""} required />
                     {errors.firstName && <div className="error-message">{errors.firstName}</div>}
-                  </div>
-
-                  <div className="form-group">
+                    </div>
+                    <div className="form-group">
                     <label htmlFor="lastName">Last Name</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className={errors.lastName ? "error" : ""}
-                    />
+                    <input type="text" id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} className={errors.lastName ? "error" : ""} required />
                     {errors.lastName && <div className="error-message">{errors.lastName}</div>}
-                  </div>
+                    </div>
                 </div>
-
+                
                 <div className="form-row">
-                  <div className="form-group">
+                    <div className="form-group">
                     <label htmlFor="email">Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={errors.email ? "error" : ""}
-                    />
+                    <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} className={errors.email ? "error" : ""} required />
                     {errors.email && <div className="error-message">{errors.email}</div>}
-                  </div>
-
-                  <div className="form-group">
+                    </div>
+                    <div className="form-group">
                     <label htmlFor="phone">Phone Number</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={errors.phone ? "error" : ""}
-                    />
+                    <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleInputChange} className={errors.phone ? "error" : ""} required />
                     {errors.phone && <div className="error-message">{errors.phone}</div>}
-                  </div>
+                    </div>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="specialRequests">Special Requests (Optional)</label>
-                  <textarea
-                    id="specialRequests"
-                    name="specialRequests"
-                    value={formData.specialRequests}
-                    onChange={handleInputChange}
-                    rows="4"
-                  ></textarea>
+                  <textarea id="specialRequests" name="specialRequests" value={formData.specialRequests} onChange={handleInputChange} rows="3"></textarea>
                 </div>
 
                 <div className="form-group">
-                  <label>Payment Method</label>
-                  <div className="payment-options">
-                    <div className="payment-option">
-                      <input
-                        type="radio"
-                        id="credit-card"
-                        name="paymentMethod"
-                        value="credit-card"
-                        checked={formData.paymentMethod === "credit-card"}
-                        onChange={handleInputChange}
-                      />
-                      <label htmlFor="credit-card">Credit Card</label>
+                    <label>Payment Method</label>
+                    <div className="payment-options-display">
+                        <p>Pay at Hotel (Selected)</p> 
                     </div>
-
-                    <div className="payment-option">
-                      <input
-                        type="radio"
-                        id="paypal"
-                        name="paymentMethod"
-                        value="paypal"
-                        checked={formData.paymentMethod === "paypal"}
-                        onChange={handleInputChange}
-                      />
-                      <label htmlFor="paypal">PayPal</label>
-                    </div>
-
-                    <div className="payment-option">
-                      <input
-                        type="radio"
-                        id="pay-at-hotel"
-                        name="paymentMethod"
-                        value="pay-at-hotel"
-                        checked={formData.paymentMethod === "pay-at-hotel"}
-                        onChange={handleInputChange}
-                      />
-                      <label htmlFor="pay-at-hotel">Pay at Hotel</label>
-                    </div>
-                  </div>
                 </div>
-
+                
                 <div className="form-actions">
-                  <button type="button" className="btn btn-secondary" onClick={handlePrevStep}>
-                    Back
-                  </button>
-                  <button type="button" className="btn btn-primary" onClick={handleNextStep}>
-                    Continue to Confirmation
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {currentStep === 3 && (
-              <motion.div
-                className="booking-step"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2>Booking Confirmation</h2>
-
-                <div className="confirmation-details">
-                  <div className="confirmation-section">
-                    <h3>Room Details</h3>
-                    <div className="confirmation-item">
-                      <span className="item-label">Room Type:</span>
-                      <span className="item-value">{selectedRoom.name}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Check-in:</span>
-                      <span className="item-value">{format(new Date(checkInDate), "MMMM dd, yyyy")}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Check-out:</span>
-                      <span className="item-value">{format(new Date(checkOutDate), "MMMM dd, yyyy")}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Number of Nights:</span>
-                      <span className="item-value">{calculateNights()}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Guests:</span>
-                      <span className="item-value">{guests}</span>
-                    </div>
-                  </div>
-
-                  <div className="confirmation-section">
-                    <h3>Guest Information</h3>
-                    <div className="confirmation-item">
-                      <span className="item-label">Name:</span>
-                      <span className="item-value">
-                        {formData.firstName} {formData.lastName}
-                      </span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Email:</span>
-                      <span className="item-value">{formData.email}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Phone:</span>
-                      <span className="item-value">{formData.phone}</span>
-                    </div>
-                    {formData.specialRequests && (
-                      <div className="confirmation-item">
-                        <span className="item-label">Special Requests:</span>
-                        <span className="item-value">{formData.specialRequests}</span>
-                      </div>
-                    )}
-                    <div className="confirmation-item">
-                      <span className="item-label">Payment Method:</span>
-                      <span className="item-value">
-                        {formData.paymentMethod === "credit-card"
-                          ? "Credit Card"
-                          : formData.paymentMethod === "paypal"
-                            ? "PayPal"
-                            : "Pay at Hotel"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="confirmation-section">
-                    <h3>Price Summary</h3>
-                    <div className="confirmation-item">
-                      <span className="item-label">Room Rate:</span>
-                      <span className="item-value">${selectedRoom.price.toFixed(2)} per night</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Room Total:</span>
-                      <span className="item-value">${roomTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="confirmation-item">
-                      <span className="item-label">Tax (12%):</span>
-                      <span className="item-value">${tax.toFixed(2)}</span>
-                    </div>
-                    <div className="confirmation-item total">
-                      <span className="item-label">Total Amount:</span>
-                      <span className="item-value">${grandTotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="terms-agreement">
-                  <p>
-                    By clicking "Complete Booking", you agree to our <a href="/terms">Terms and Conditions</a> and{" "}
-                    <a href="/privacy">Privacy Policy</a>. You will receive a confirmation email once your booking is
-                    processed.
-                  </p>
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" className="btn btn-secondary" onClick={handlePrevStep}>
-                    Back
-                  </button>
-                  <button type="button" className="btn btn-primary" onClick={handleCompleteBooking}>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary btn-block" 
+                    disabled={!selectedRoom || availableRoomsLoading}
+                  >
                     Complete Booking
                   </button>
                 </div>
-              </motion.div>
-            )}
+                 {errors.room && <div className="error-message">{errors.room}</div>}
+              </form>
+            </div>
           </div>
         </div>
       </div>
-
       <Footer />
     </div>
   )

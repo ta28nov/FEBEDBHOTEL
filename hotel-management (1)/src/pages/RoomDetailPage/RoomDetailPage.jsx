@@ -1,147 +1,15 @@
-
-
 "use client"
 
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { motion } from "framer-motion"
-import { FaWifi, FaCoffee, FaTv, FaBath, FaUsers, FaCheck, FaArrowLeft } from "react-icons/fa"
+import { formatCurrency } from "../../config/constants"
+import { FaWifi, FaCoffee, FaTv, FaBath, FaUsers, FaCheck, FaArrowLeft, FaRulerCombined, FaBed } from "react-icons/fa"
 import Header from "../../components/Header/Header"
 import Footer from "../../components/Footer/Footer"
+import roomService from "../../services/roomService"
 import "./RoomDetailPage.css"
 
-// Dữ liệu mẫu cho chi tiết phòng
-const allRooms = [
-  {
-    id: 1,
-    name: "Standard Room",
-    description: "A comfortable room with all the essential amenities for a pleasant stay.",
-    longDescription:
-      "Our Standard Room offers a perfect blend of comfort and functionality. Designed with your relaxation in mind, this room features a plush queen-size bed with premium linens, a work desk, and a modern bathroom with a walk-in shower. Enjoy the convenience of high-speed Wi-Fi, a flat-screen TV with premium channels, and a coffee maker to start your day right. The room's warm color palette and soft lighting create a welcoming atmosphere, making it an ideal choice for both business and leisure travelers seeking quality accommodations without compromising on comfort.",
-    price: 150,
-    capacity: 2,
-    size: "30 m²",
-    bedType: "1 Queen Bed",
-    type: "standard",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      "https://images.unsplash.com/photo-1552902019-ebcd97aa9aa0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-      "https://images.unsplash.com/photo-1586105251261-72a756497a11?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=958&q=80",
-    ],
-    amenities: ["wifi", "tv", "coffee", "bath", "air conditioning", "desk", "safe", "hairdryer"],
-  },
-  {
-    id: 2,
-    name: "Deluxe Room",
-    description: "Spacious room with premium furnishings and additional amenities.",
-    longDescription:
-      "Elevate your stay with our Deluxe Room, offering an enhanced level of comfort and style. This generously sized accommodation features a luxurious king-size bed with premium linens, a cozy seating area with a sofa, and an elegant bathroom with both a bathtub and a separate rain shower. The room is equipped with high-speed Wi-Fi, a large flat-screen TV, a minibar stocked with premium beverages, and a Nespresso coffee machine. Large windows provide abundant natural light and offer stunning views of the surrounding area. The sophisticated décor and thoughtful amenities make our Deluxe Room perfect for those seeking a more indulgent hotel experience.",
-    price: 250,
-    capacity: 2,
-    size: "40 m²",
-    bedType: "1 King Bed",
-    type: "deluxe",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-      "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    ],
-    amenities: [
-      "wifi",
-      "tv",
-      "coffee",
-      "bath",
-      "minibar",
-      "air conditioning",
-      "desk",
-      "safe",
-      "hairdryer",
-      "bathrobe",
-      "slippers",
-    ],
-  },
-  {
-    id: 3,
-    name: "Executive Suite",
-    description: "Luxurious suite with separate living area and exclusive services.",
-    longDescription:
-      "Experience the pinnacle of luxury in our Executive Suite, a spacious and elegantly appointed accommodation designed for the discerning traveler. The suite features a separate bedroom with a premium king-size bed, a large living area with designer furniture, and a dining space perfect for entertaining or in-room dining. The marble bathroom includes a deep soaking tub, a separate rain shower, and premium bath amenities. Enjoy state-of-the-art technology with high-speed Wi-Fi, multiple flat-screen TVs, a Bose sound system, and a fully stocked minibar. Executive Suite guests also receive exclusive benefits including priority check-in/check-out, complimentary breakfast, access to the Executive Lounge, and personalized concierge service. The panoramic views and sophisticated ambiance make this suite an exceptional choice for an unforgettable stay.",
-    price: 350,
-    capacity: 3,
-    size: "60 m²",
-    bedType: "1 King Bed + Sofa Bed",
-    type: "executive",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1591088398332-8a7791972843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1591088398332-8a7791972843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-      "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    ],
-    amenities: [
-      "wifi",
-      "tv",
-      "coffee",
-      "bath",
-      "minibar",
-      "workspace",
-      "air conditioning",
-      "desk",
-      "safe",
-      "hairdryer",
-      "bathrobe",
-      "slippers",
-      "living area",
-      "dining area",
-      "executive lounge access",
-    ],
-  },
-  {
-    id: 4,
-    name: "Family Suite",
-    description: "Spacious suite designed for families with connecting rooms.",
-    longDescription:
-      "Our Family Suite is the perfect choice for families seeking comfort and convenience during their stay. This thoughtfully designed accommodation features a master bedroom with a king-size bed and a separate children's room with twin beds, providing privacy for parents while keeping the family connected. The spacious living area includes comfortable seating and a dining table, making it ideal for family meals and relaxation. The suite is equipped with two bathrooms, a kitchenette with a microwave and refrigerator, multiple flat-screen TVs, and high-speed Wi-Fi. Family-friendly amenities include child-safe features, a selection of board games, and optional cribs or rollaway beds upon request. With ample space for everyone and all the comforts of home, our Family Suite ensures a memorable and stress-free family vacation.",
-    price: 400,
-    capacity: 4,
-    size: "75 m²",
-    bedType: "1 King Bed + 2 Twin Beds",
-    type: "suite",
-    status: "available",
-    image:
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    ],
-    amenities: [
-      "wifi",
-      "tv",
-      "coffee",
-      "bath",
-      "minibar",
-      "kitchen",
-      "air conditioning",
-      "desk",
-      "safe",
-      "hairdryer",
-      "bathrobe",
-      "slippers",
-      "connecting rooms",
-      "child-friendly",
-    ],
-  },
-]
-
-// Hàm hiển thị biểu tượng cho các tiện nghi
 const getAmenityIcon = (amenity) => {
   switch (amenity) {
     case "wifi":
@@ -152,10 +20,25 @@ const getAmenityIcon = (amenity) => {
       return <FaTv />
     case "bath":
       return <FaBath />
+    case "users":
+      return <FaUsers />
     default:
       return <FaCheck />
   }
 }
+
+const getImageUrl = (relativePath) => {
+  if (!relativePath) return '';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5225";
+  const serverBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '');
+  const imagePath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+  return `${serverBaseUrl}${imagePath}`;
+}
+
+// Dữ liệu mẫu tiện nghi (amenities) cho loại phòng
+const AMENITIES_SAMPLE = [
+  "wifi", "tv", "coffee", "bath", "air conditioning", "desk", "safe", "hairdryer"
+];
 
 const RoomDetailPage = () => {
   const { id } = useParams()
@@ -163,23 +46,55 @@ const RoomDetailPage = () => {
   const [loading, setLoading] = useState(true)
   const [activeImage, setActiveImage] = useState(0)
 
-  // Cuộn lên đầu trang khi component được tải
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
-  // Tìm phòng dựa trên ID
   useEffect(() => {
-    // Mô phỏng API call
-    const fetchRoom = () => {
+    const fetchRoom = async () => {
       setLoading(true)
-      setTimeout(() => {
-        const foundRoom = allRooms.find((room) => room.id === Number.parseInt(id))
-        setRoom(foundRoom || null)
-        setLoading(false)
-      }, 500)
-    }
+      try {
+        const roomRes = await roomService.getRoomById(id)
+        const roomData = roomRes.data
+        const roomTypeRes = await roomService.getRoomTypeById(roomData.roomTypeId)
+        const roomType = roomTypeRes.data
+        const imagesRes = await roomService.getRoomTypeImages(roomData.roomTypeId)
+        console.log('DEBUG: Raw images data from API:', imagesRes.data);
+        const images = Array.isArray(imagesRes.data) ? imagesRes.data : []
+        const sortedImages = images.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+        const gallery = sortedImages.map(img => getImageUrl(img.value))
+        // Lấy amenities/specifications từ features, bỏ qua image
+        const features = Array.isArray(roomType.features) ? roomType.features : [];
+        console.log('DEBUG: roomType.features:', features);
+        const amenities = features.filter(f => f.featureType === "amenity").map(f => f.name || f.value || "");
+        const specifications = features.filter(f => f.featureType === "specification");
+        console.log('DEBUG: specifications array:', specifications);
 
+        const sizeSpec = specifications.find(spec => spec.name === 'Area');
+        const bedSpec = specifications.find(spec => spec.name === 'Bed');
+
+        setRoom({
+          id: roomData.id,
+          name: roomType.name,
+          description: roomType.description,
+          longDescription: roomType.description,
+          price: roomType.basePrice,
+          capacity: roomType.capacity,
+          size: sizeSpec ? sizeSpec.value : 'Đang cập nhật',
+          bedType: bedSpec ? bedSpec.value : 'Đang cập nhật',
+          type: roomType.name,
+          status: roomData.status,
+          image: gallery[0] || '',
+          gallery: gallery.length ? gallery : ["/placeholder.svg"],
+          amenities: amenities.length > 0 ? amenities : AMENITIES_SAMPLE,
+          specifications,
+        })
+      } catch (err) {
+        setRoom(null)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchRoom()
   }, [id])
 
@@ -224,16 +139,22 @@ const RoomDetailPage = () => {
           >
             <h1>{room.name}</h1>
             <div className="room-meta">
-              <div className="room-capacity">
+              <div className="meta-item">
                 <FaUsers />
                 <span>Up to {room.capacity} guests</span>
               </div>
-              <div className="room-size">
-                <span>{room.size}</span>
-              </div>
-              <div className="room-bed">
-                <span>{room.bedType}</span>
-              </div>
+              {room.size && room.size !== 'Đang cập nhật' && (
+                <div className="meta-item">
+                  <FaRulerCombined /> {/* Placeholder, consider a better icon for size/area */}
+                  <span>{room.size}</span>
+                </div>
+              )}
+              {room.bedType && room.bedType !== 'Đang cập nhật' && (
+                <div className="meta-item">
+                  <FaBed /> {/* Placeholder, consider a better icon for bed type */}
+                  <span>{room.bedType}</span>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -269,24 +190,39 @@ const RoomDetailPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <h2>Room Description</h2>
-                <p>{room.longDescription}</p>
+                <p>{room.longDescription || room.description || "Đang cập nhật"}</p>
               </motion.div>
 
               <motion.div
-                className="room-amenities-list"
+                className="room-features-conveniences"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <h2>Room Amenities</h2>
-                <ul>
-                  {room.amenities.map((amenity, index) => (
-                    <li key={index}>
-                      {getAmenityIcon(amenity)}
-                      <span>{amenity.charAt(0).toUpperCase() + amenity.slice(1)}</span>
-                    </li>
-                  ))}
-                </ul>
+                <h2>Room Features & Conveniences</h2>
+                <div className="features-grid">
+                  <div className="amenities-column">
+                    <ul>
+                      {room.amenities && room.amenities.length > 0 ? room.amenities.map((amenity, index) => (
+                        <li key={index} className="amenity-item">
+                          {getAmenityIcon(amenity)}
+                          <span>{amenity.charAt(0).toUpperCase() + amenity.slice(1)}</span>
+                        </li>
+                      )) : <li>Amenities data is being updated.</li>}
+                    </ul>
+                  </div>
+                  {room.specifications && room.specifications.length > 0 && (
+                  <div className="specifications-column">
+                    <ul>
+                      {room.specifications.map((spec, idx) => (
+                        <li key={idx} className="specification-item">
+                          <span className="spec-label">{spec.name}:</span> <span className="spec-value">{spec.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  )}
+                </div>
               </motion.div>
             </div>
 
@@ -299,26 +235,26 @@ const RoomDetailPage = () => {
               <div className="booking-card">
                 <h3>Room Details</h3>
                 <div className="price">
-                  <span className="amount">${room.price}</span>
-                  <span className="per-night">/ night</span>
+                  <span className="amount">{formatCurrency(room.price)}</span>
+                  <span className="per-night">/ đêm</span>
                 </div>
 
                 <div className="booking-details">
                   <div className="detail-item">
                     <span className="label">Room Type:</span>
-                    <span className="value">{room.type.charAt(0).toUpperCase() + room.type.slice(1)}</span>
+                    <span className="value">{room.type ? room.type.charAt(0).toUpperCase() + room.type.slice(1) : "Đang cập nhật"}</span>
                   </div>
                   <div className="detail-item">
                     <span className="label">Max Guests:</span>
-                    <span className="value">{room.capacity}</span>
+                    <span className="value">{room.capacity || "Đang cập nhật"}</span>
                   </div>
                   <div className="detail-item">
                     <span className="label">Bed Type:</span>
-                    <span className="value">{room.bedType}</span>
+                    <span className="value">{room.bedType || "Đang cập nhật"}</span>
                   </div>
                   <div className="detail-item">
                     <span className="label">Room Size:</span>
-                    <span className="value">{room.size}</span>
+                    <span className="value">{room.size || "Đang cập nhật"}</span>
                   </div>
                 </div>
 
