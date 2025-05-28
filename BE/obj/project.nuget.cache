@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "s8ERELmnpvzcQGZCGLmOjvMQiFiOITCfaRyNwuF9bALmsw7Z22MKNkrzp1jUmUTd9hcMiJVVAVyCmn1HEILgxQ==",
+  "dgSpecHash": "7ln+dhiw9S5bJUhLjnbzDrk6g4WByEw35RDIh0LRRy0P/Z+a9hDRfDbVrzBIWyB+wqHU/0kwfWh0s4w3qJJeTg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\BE.csproj",
+  "projectFilePath": "C:\\Users\\Admin\\FEBEDBHOTEL\\BE\\BE.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Admin\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\Admin\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

@@ -260,9 +260,9 @@ const CustomerList = () => {
                 page.map((row) => {
                   prepareRow(row)
                   return (
-                    <tr {...row.getRowProps()} key={row.id}>
+                    <tr {...row.getRowProps()} key={row.original.id}>
                       {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} key={cell.id}>{cell.render("Cell")}</td>
+                        <td {...cell.getCellProps()} key={`${row.original.id}_${cell.column.id}`}>{cell.render("Cell")}</td>
                       ))}
                     </tr>
                   )

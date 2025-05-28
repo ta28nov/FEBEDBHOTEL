@@ -352,7 +352,7 @@ const Services = () => {
                 const rowProps = row.getRowProps();
                 return (
                   // Gán key trực tiếp
-                  <tr key={rowProps.key} {...rowProps}>
+                  <tr key={row.original.id} {...rowProps}>
                     {row.cells.map((cell) => {
                       // Lấy props cho data cell
                       const cellProps = cell.getCellProps();
@@ -364,7 +364,7 @@ const Services = () => {
                       };
                       return (
                         // Gán key trực tiếp
-                        <td key={cellProps.key} {...cellProps} style={style}>
+                        <td key={`${row.original.id}_${cell.column.id}`} {...cellProps} style={style}>
                           {cell.render("Cell")}
                         </td>
                       );

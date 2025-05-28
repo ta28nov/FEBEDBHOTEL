@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QH1hpOKUVj1tU9oVRAkUCtDjh8pAR8QkjNQc5e6D5LguCqlHM74CeoFNL31ABWYrT33jZ9vDb0/pFr1YSFKptQ==",
+  "dgSpecHash": "b+RrmIsmE/J3nsx7VTBGMTW3dkZwrbLy5THVRjd3lQdzdvf+orSY3ZNbf+p6OiFSL+d9HDyBtz03qLUP5meD/w==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Admin\\Filehoanchinh\\FEBEDBHOTEL\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj",
+  "projectFilePath": "C:\\Users\\Admin\\FEBEDBHOTEL\\BE\\HotelManagement.Infrastructure\\HotelManagement.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Admin\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\Admin\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
